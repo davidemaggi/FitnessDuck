@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FitnessDuck.Data", "FitnessDuck.Data\FitnessDuck.Data.csproj", "{EE2FCFBC-0FB6-45BC-A4A9-B4420E78EC41}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FitnessData.Core", "FitnessData.Core\FitnessData.Core.csproj", "{B3CAE1BF-ACC6-4580-9284-A68B1940DC0A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FitnessData.Models", "FitnessData.Models\FitnessData.Models.csproj", "{13A52A54-FCBF-4020-8929-DD7EB2B0AE66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FitnessDuck.Api", "FitnessDuck.Api\FitnessDuck.Api.csproj", "{99D202BB-D660-40FA-8B16-F61FC49DC134}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EE2FCFBC-0FB6-45BC-A4A9-B4420E78EC41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE2FCFBC-0FB6-45BC-A4A9-B4420E78EC41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE2FCFBC-0FB6-45BC-A4A9-B4420E78EC41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE2FCFBC-0FB6-45BC-A4A9-B4420E78EC41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3CAE1BF-ACC6-4580-9284-A68B1940DC0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3CAE1BF-ACC6-4580-9284-A68B1940DC0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3CAE1BF-ACC6-4580-9284-A68B1940DC0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3CAE1BF-ACC6-4580-9284-A68B1940DC0A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13A52A54-FCBF-4020-8929-DD7EB2B0AE66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13A52A54-FCBF-4020-8929-DD7EB2B0AE66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13A52A54-FCBF-4020-8929-DD7EB2B0AE66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13A52A54-FCBF-4020-8929-DD7EB2B0AE66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99D202BB-D660-40FA-8B16-F61FC49DC134}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99D202BB-D660-40FA-8B16-F61FC49DC134}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99D202BB-D660-40FA-8B16-F61FC49DC134}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99D202BB-D660-40FA-8B16-F61FC49DC134}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
