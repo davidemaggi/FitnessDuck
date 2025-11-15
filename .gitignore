@@ -11,6 +11,8 @@
 *.sln.docstates
 *.env
 
+.idea/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
@@ -416,3 +418,7 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+
+
+appsettings.Development.json

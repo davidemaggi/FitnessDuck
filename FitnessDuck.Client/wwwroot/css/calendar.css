@@ -1,0 +1,33 @@
+.header-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background-color: #eeeeee;
+    border-bottom: 1px solid #ccc;
+}
+.scroll-container {
+    overflow-x: auto;
+    white-space: nowrap;
+    flex-grow: 1;
+    scroll-behavior: smooth;
+    /* On desktop, reduce available width to account for buttons */
+    max-width: 100%;
+}
+@media(min-width: 768px) {
+    /* leave space for buttons on wider screens */
+    .scroll-container {
+        max-width: calc(100% - 120px); /* Width minus 2 buttons of ~60px */
+    }
+}
+.day-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+    height: 60px;
+    margin-right: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    user-select: none;
+    background-color: #ccc;
+}

@@ -1,0 +1,64 @@
+@using FitnessData.Core.Services.Interfaces
+@using FitnessDuck.Client.Localization
+@using FitnessDuck.Models.DTOs
+@using Microsoft.Extensions.Localization
+@inject ICalendardService _calendar;
+
+@inject IStringLocalizer<Localizations> Localizer
+
+<MudPaper Outlined="true" Class="px-1 py-1 border-dashed" Style="overflow-x:auto; white-space:nowrap; flex-shrink:0; ">
+    <MudStack Justify="@Justify.SpaceAround" StretchItems="StretchItems.Middle" Spacing="3" Row="true">
+        <MudIconButton Class="pa-3" Icon="@Icons.Material.Filled.NavigateBefore" aria-label="<" OnClick="OnPreviousWeek" />
+
+        <div style="overflow-x:auto; white-space:nowrap;">
+            <MudStack Justify="@Justify.FlexStart" StretchItems="StretchItems.All" Spacing="1" Row="true" Style="display:inline-flex; flex-wrap: nowrap;">
+                @foreach (var d in _days)
+                {
+                
+                    <SingleDayLayout OnClick="@(async (day) => await OnDayClicked(day))" _day="d" _isSelected="_selectedDay==d.raw"></SingleDayLayout>
+                }
+
+            </MudStack>
+        </div>
+        <MudIconButton Class="pa-3" Icon="@Icons.Material.Filled.NavigateNext" aria-label=">" OnClick="OnNextWeek" />
+
+
+    </MudStack>
+</MudPaper>
+@code {
+
+    [Parameter] public string Text { get; set; } = "";
+    [Parameter] public EventCallback<DateTime> onDaySelect { get; set; }
+    [Parameter] public EventCallback<int> onWeekChange { get; set; }
+    [Parameter] public DateTime _selectedDay { get; set; }= DateTime.Today;
+
+    private List<CalendarDayDto> _days=new();
+    
+    protected override void OnInitialized()
+    {
+        
+        
+        
+        _days = _calendar.GetCaleendarView(_calendar.GetLastMonday());
+    }
+
+
+    private async Task OnDayClicked(CalendarDayDto dt)
+    {
+        await onDaySelect.InvokeAsync(dt.raw);
+    }
+    
+    private async Task OnNextWeek()
+    {
+        _days = _calendar.GetCaleendarView(_days.First().raw.AddDays(7));
+        await onWeekChange.InvokeAsync(1);
+    }
+    
+    private async Task OnPreviousWeek()
+    {
+        _days = _calendar.GetCaleendarView(_days.First().raw.AddDays(-7));
+
+        await onWeekChange.InvokeAsync(-1);
+    }
+
+}

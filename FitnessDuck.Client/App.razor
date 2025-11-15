@@ -1,0 +1,43 @@
+﻿@using System.Reflection
+@using FitnessDuck.Client.Pages.Errors
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+<ErrorBoundary>
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+
+            @if (IsAuthorizedPage(routeData.PageType))
+            {
+                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                    <NotAuthorized>
+                        <Unauthorized/>
+                    </NotAuthorized>
+                    <Authorizing>
+                        <p>Checking authorization...</p>
+                    </Authorizing>
+                </AuthorizeRouteView>
+            }
+            else
+            {
+                <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            }
+
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+
+        <NotFound>
+            <PageTitle>Not found</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">Sorry, there's nothing at this address.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+</ErrorBoundary>
+@code {
+    private static bool IsAuthorizedPage(Type pageType)
+    {
+        return pageType.GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true).Any();
+    }
+}

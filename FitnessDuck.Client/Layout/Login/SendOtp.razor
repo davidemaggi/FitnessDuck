@@ -1,0 +1,65 @@
+@using FitnessDuck.Models
+@using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
+@inject AuthApiClient _authApiClient
+
+<MudTextField @bind-Value="_email" Label="Email" Required="true" For="@(() => _email)" Immediate="true"
+              Validation="@(new Func<string, string>(ValidateEmail))"
+              Error="@_emailError" ErrorText="Invalid email" />
+<MudButton Disabled="@(!_emailValid)" OnClick="SendOtpAsync">Send OTP</MudButton>
+
+
+@code {
+    private string _email = string.Empty;
+    private bool _emailValid;
+    private bool _emailError = false;
+private bool _isLoading = false;
+    
+[Parameter]
+public EventCallback<string> onOtpSent { get; set; }
+    
+    private string? ValidateEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return "Email is required";
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            _emailError = false;
+            _emailValid = true;
+            return null;
+        }
+        catch
+        {
+            _emailError = true;
+            _emailValid = false;
+            return "Invalid email format";
+        }
+    }
+    
+    private async Task SendOtpAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            // Call your api client to send OTP
+            var success = await _authApiClient.RequestTokenAsync(new RequestTokenDto(){ContactMethod = ContactMethod.Email, Contact = _email}); 
+            if (success)
+            {
+                await onOtpSent.InvokeAsync(_email); // Move to OTP step
+            }
+            else
+            {
+                // Show error to user
+                _emailError = true;
+            }
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+    
+    
+    
+}

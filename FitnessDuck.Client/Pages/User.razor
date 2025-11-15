@@ -1,0 +1,19 @@
+
+@page "/user"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+
+<AuthorizeView>
+    <Authorized>
+        <UserLayout/>
+    </Authorized>
+    <NotAuthorized>
+       XXXX
+    </NotAuthorized>
+</AuthorizeView>
+
+
+
+@code {
+    
+}

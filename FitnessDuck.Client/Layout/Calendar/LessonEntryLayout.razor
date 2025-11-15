@@ -1,0 +1,78 @@
+@using FitnessDuck.Client.Localization
+@using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.Localization
+
+
+@inject IStringLocalizer<Localizations> _localizer
+@inject LessonApiClient _lessons
+@inject ISnackbar _snackbar
+
+
+<MudPaper Outlined Class="mb-3 border-dashed">
+    <MudStack StretchItems="StretchItems.Start" Row>
+        <MudPaper Class="pa-3">       
+            <MudText Typo="Typo.h6">@(_lesson.Schedule?.Name ?? _lesson.Name ?? @_localizer["lesson_name_not_found"])</MudText>
+        </MudPaper>
+        @if (_lesson.IsUserRegistered(_userId))
+        {
+        <MudIconButton Icon=@Icons.Material.Filled.DeleteForever OnClick="UnsubscribeFom"></MudIconButton>
+            
+        }
+        else
+        {
+            <MudIconButton Icon=@Icons.Material.Filled.AddCircle OnClick="SubscribeTo"></MudIconButton>
+        }
+        <MudPaper Class="pa-3" Elevation="0">Item 3</MudPaper>
+    </MudStack>
+</MudPaper>
+
+@code {
+
+    [Parameter] public LessonDto _lesson { get; set; } = new();
+    [Parameter] public EventCallback OnSubscribe { get; set; } = new();
+[Parameter] public EventCallback OnUnSubscribe { get; set; } = new();
+    [CascadingParameter] Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private Guid _userId=Guid.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        var userId = authState.User.Claims.FirstOrDefault().Value;
+        _userId=Guid.Parse(userId); 
+    }
+
+
+    private async Task SubscribeTo()
+    {
+
+        if (_lesson.IsUserRegistered(_userId))
+        {
+            _snackbar.Add("You are already registered", severity: Severity.Error);
+            return;
+        }
+
+        await _lessons.SubscribeToLesson(_lesson.Id, _userId);
+        
+        _snackbar.Add("You succesfully regiterd to this lesson", severity: Severity.Success);
+        await OnSubscribe.InvokeAsync();
+    }
+    
+    private async Task UnsubscribeFom()
+    {
+
+        if (!_lesson.IsUserRegistered(_userId))
+        {
+            _snackbar.Add("You are not registered", severity: Severity.Error);
+            return;
+        }
+
+        await _lessons.UnsubscribeFromLesson(_lesson.Id, _userId);
+        
+        _snackbar.Add("You succesfully unregistered to this lesson", severity: Severity.Success);
+        await OnUnSubscribe.InvokeAsync();
+    }
+
+}

@@ -1,0 +1,107 @@
+@using FitnessDuck.Models
+@using FitnessDuck.Share.Clients.Implementations
+@inject AuthApiClient _authApiClient
+@inject ISnackbar Snackbar
+
+@inject NavigationManager _nav
+
+<MudGrid  Justify="Justify.Center" AlignItems="AlignItems.Center" Class="mt-4" GutterSize="2">
+    @for (int i = 0; i < 6; i++)
+    {
+        var index = i;
+        <MudItem xs="2">
+            <MudTextField @ref="@(_otpInputs[index])"
+                                      Value="_otpValues[index]"
+                          Variant="Variant.Outlined"
+                          Immediate="true"
+                          MaxLength="1"
+                          Class="otp-input"
+                          InputType="InputType.Number"
+                          ValueChanged="@((string val) => OnOtpValueChanged(val, index))"/>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    private string[] _otpValues = new string[6];
+    private MudTextField<string>[] _otpInputs = new MudTextField<string>[6];
+    
+    private string _otp = string.Empty;
+    private string _otpError = string.Empty;
+
+    private bool _isLoading = false;
+    
+    [Parameter]
+    public string _email { get; set; }
+    
+    
+    
+    private async Task OnOtpValueChanged(string val, int index)
+    {
+        _otpValues[index] = val;
+
+        if (!string.IsNullOrEmpty(val) && char.IsDigit(val[0]))
+        {
+            if (index < 5)
+                await _otpInputs[index + 1].FocusAsync();
+            else
+                await TryLoginAsync();
+        }
+    }
+
+    
+    private async Task ResetOtpInputsAsync()
+    {
+        for (int i = 0; i < _otpValues.Length; i++)
+            _otpValues[i] = string.Empty;
+
+        // Optionally force UI update if needed
+        StateHasChanged();
+
+        // Set focus to first input box if available
+        if (_otpInputs.Length > 0 && _otpInputs[0] != null)
+            await _otpInputs[0].FocusAsync();
+    }
+    
+    
+    
+    private async Task TryLoginAsync()
+    {
+
+        _otp = string.Concat(_otpValues);
+        if (string.IsNullOrEmpty(_otp))
+            return;
+
+        _isLoading = true;
+        _otpError = string.Empty;
+        try
+        {
+            var loginSuccess = await _authApiClient.LoginAsync(_email, ContactMethod.Email, _otp); // Implement this API accordingly
+
+            if (loginSuccess)
+            {
+                // Optionally decide to allow updating details
+                // finish immediately if no edit
+                Snackbar.Add("Welcome!", Severity.Success);
+                
+                _nav.NavigateTo("/");
+                
+            }
+            else
+            {
+                _otpError = "OTP invalid or expired";
+                Snackbar.Add(_otpError, Severity.Error);
+
+            }
+        }
+        catch (Exception ex)
+        {
+        }
+        finally
+        {
+            await ResetOtpInputsAsync();
+            _isLoading = false;
+        }
+    }
+    
+}

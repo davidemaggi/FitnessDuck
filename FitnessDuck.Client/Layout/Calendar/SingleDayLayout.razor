@@ -1,0 +1,79 @@
+@using FitnessDuck.Client.Localization
+@using FitnessDuck.Models.DTOs
+@using Microsoft.Extensions.Localization
+@using SQLitePCL
+@inject IStringLocalizer<Localizations> Localizer
+
+<div @onclick="HandleClick" style="cursor:pointer;">
+<MudPaper Class=@baseCssClass Style=@GetStyleForMain()>
+    <MudText Style=@GetStyleForDay() Typo="Typo.caption" >@Localizer[$"day_week_short_{_day.Name.ToLower()}"]</MudText>
+    <MudText Style=@GetStyleForNumber()  Typo="Typo.h6"  Bold="true">@_day.Number</MudText>
+</MudPaper>
+</div>
+
+@code {
+    
+    [Parameter]
+    public CalendarDayDto _day { get; set; }
+
+    [Parameter] public bool _isSelected { get; set; } = false;
+    
+    [Parameter] public EventCallback<CalendarDayDto> OnClick { get; set; } // event for click
+
+    private string baseCssClass = "pa-2 d-flex flex-column align-items-center";
+    private string baseStyle = "width:80px; cursor:pointer;";
+    
+    private string dayCssClass = "";
+    private string dayStyle = "";
+    
+    private string numberCssClass = "";
+    private string numberStyle = "";
+    
+    protected override void OnInitialized()
+    {
+        
+        
+        
+        
+    }
+
+
+    private string GetStyleForMain()
+    {
+        if (_day.IsInThePast())
+        {
+            return baseStyle + " background-color: #EEEEEE";
+        }
+
+
+        return baseStyle+ " background-color: #FFFFFF";
+    }
+    
+    private string GetStyleForDay()
+    {
+        if (_day.IsInThePast())
+        {
+            return dayStyle + " color: #CCCCCC";
+        }
+
+
+        return dayStyle + " color: #FF0000";
+    }
+    
+    private string GetStyleForNumber()
+    {
+        if (_day.IsInThePast())
+        {
+            return numberStyle + " color: #CCCCCC";
+        }
+
+
+        return numberStyle+ " color: #000000";
+    }
+
+    private async Task HandleClick()
+    {
+       // if (!_day.IsInThePast() && OnClick.HasDelegate)
+            await OnClick.InvokeAsync(_day); // pass dayName or any param
+    }
+}

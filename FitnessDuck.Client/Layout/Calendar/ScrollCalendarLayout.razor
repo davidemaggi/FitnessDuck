@@ -1,0 +1,59 @@
+@using FitnessData.Core.Services.Interfaces
+@using FitnessDuck.Client.Localization
+@using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
+@using Microsoft.Extensions.Localization
+@using MudBlazor
+
+@inject LessonApiClient _lesson
+@inject IStringLocalizer<Localizations> _localizer
+@inject ICalendardService _calendar
+
+<WeekDayLayout onWeekChange="ChangeWeek" onDaySelect="SelectDay" _selectedDay="_selectedDay" />
+
+
+<!-- Vertically scrollable cards container -->
+<MudPaper Class="flex-grow-1 mx-2 my-2"
+          Style="overflow-y:auto; -webkit-overflow-scrolling: touch;">
+
+    @foreach (var item in upcomingWeek.Where(x=>x.StartDateUtc >= _selectedDay && x.EndDateUtc<=_selectedDay.AddDays(1).AddMilliseconds(-1)))
+    {
+        <LessonEntryLayout OnUnSubscribe="LoadWeek" OnSubscribe="LoadWeek" _lesson="item"/>
+    }
+
+</MudPaper>
+
+@code{
+
+    private DateTime _selectedDay = DateTime.Today;
+    private DateTime _startDay =DateTime.Today;
+    private IEnumerable<LessonDto> upcomingWeek = new List<LessonDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _startDay = _calendar.GetLastMonday();
+        await LoadWeek();
+    }
+    
+    
+    async Task LoadWeek()
+    {
+        upcomingWeek = await _lesson.GetUpcomingLessons(_startDay,_startDay.AddDays(7));
+        StateHasChanged();
+    }
+    
+void SelectDay(DateTime day)
+{
+_selectedDay = day;
+// TODO: update _items based on selected day here if needed
+}
+
+async Task ChangeWeek(int n)
+{
+    _startDay = _startDay.AddDays(7*n);
+    await LoadWeek();
+}
+
+
+}
+

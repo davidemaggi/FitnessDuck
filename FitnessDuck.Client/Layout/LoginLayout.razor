@@ -1,0 +1,31 @@
+@using FitnessDuck.Client.Layout.Login
+
+
+
+<MudPaper Class="pa-6 mx-auto" MaxWidth="400px">
+    
+    @if (waitForOtp)
+    {
+        <ValidateOtp _email=@_email />
+    }
+    else
+    {
+        <SendOtp onOtpSent="OnOtpChangedHandler" />
+    }
+
+
+</MudPaper>
+
+@code {
+
+
+    bool waitForOtp = false;
+    private string _email;
+
+    private void OnOtpChangedHandler(string email)
+    {_email = email;
+        waitForOtp = true;
+        
+    }
+
+}

@@ -1,0 +1,66 @@
+@using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
+@inject AuthApiClient _authApiClient
+@inject NavigationManager _navManager
+
+<h3>UserLayout</h3>
+@if(!_loading)
+{
+    
+    
+    <MudPaper Class="pa-4">
+        <MudForm @ref="form" @bind-IsValid="@success" @bind-Errors="@errors">
+            <MudTextField @bind-Value="_user.Name" T="string" Label="Name" Required="true" RequiredError="Name is required!" />
+            <MudTextField @bind-Value="_user.Surname" T="string" Label="Surname" Required="true" RequiredError="Surname is required!" />
+        </MudForm>   
+    </MudPaper>
+
+<MudButton OnClick="UpdateUserInfo">Update</MudButton>
+    
+    
+    
+    <MudButton OnClick="LogOutAsync">Logout</MudButton>
+
+}
+else
+{
+    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Class="mt-6" />
+
+}
+
+@code {
+    bool _loading = true;
+    UserDto _user;
+    bool success;
+    string[] errors = { };
+    MudForm form;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await _authApiClient.MeAsync();
+        _loading = false;
+    }
+
+    private async Task UpdateUserInfo()
+    {
+        
+        await _authApiClient.UpdateUserInfo(new UserInfoDto
+        {
+            Id = _user.Id,
+            Name = _user.Name,
+            Surname = _user.Surname,
+            Local = _user.Local
+        });
+
+    }
+
+    private async Task LogOutAsync()
+    {
+       await _authApiClient.LogoutAsync();
+       _navManager.NavigateTo("/");
+
+    }
+
+    
+
+}
