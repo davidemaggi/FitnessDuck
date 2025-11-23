@@ -1,0 +1,87 @@
+@using FitnessDuck.Models
+@using FitnessDuck.Models.Common
+@using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
+
+@inject ScheduleApiClient _schedules
+
+
+@inject IDialogService DialogService
+@inject ISnackbar _snackbar;
+
+
+
+
+
+<MudGrid Class="pa-4 mr-16">
+   
+      
+            @foreach (var schedule in schedulesList)
+            {
+                <MudItem xs="4" md="4">
+                <ScheduleCard _Schedule="schedule"/>
+                </MudItem>
+            }
+            <MudItem xs="4" md="4">
+            <MudCard Elevation="1" Style="height:100%; ">
+                <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Style="height:100%;">
+                    <MudIconButton Variant="Variant.Text"
+                                   Color="Color.Info"
+                                   Icon="@Icons.Material.Filled.Add"
+                                   OnClick="CreateNewSchedule"
+                                   Style="width:200px; height:200px; font-size:2rem; border-radius:24px;"
+                    />
+                    <MudText >Aggiungi un programma</MudText>
+                </MudStack>
+            </MudCard>
+            </MudItem>
+             
+  
+
+</MudGrid>
+
+
+@code {
+    
+    IEnumerable<ScheduleDto> schedulesList = new List<ScheduleDto>();
+
+    MudForm form;
+    
+    private ScheduleDto selectedEntry;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        schedulesList = await _schedules.GetSchedules();
+    }
+
+
+    private async Task CreateNewSchedule()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ScheduleEditor>("Editor", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            //In a real world scenario we would reload the data from the source here since we "removed" it in the dialog already.
+            var res = result.Data! as SaveScheduleDto;
+
+            try
+            {
+                var saveResult = await _schedules.SaveSchedule(res);
+                _snackbar.Add("Schedule has ben created", Severity.Success);
+            }
+            catch (Exception e)
+            {
+                _snackbar.Add("Error creating Schedule", Severity.Error);
+
+            }
+            
+            
+
+        }
+
+    }
+
+}

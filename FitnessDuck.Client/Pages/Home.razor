@@ -1,14 +1,26 @@
 ﻿@using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
-@using FitnessDuck.Client.Layout.Calendar
+@using FitnessData.Core.Services.Interfaces
+@using FitnessDuck.Client.Layout.Lessons
+@using FitnessDuck.Client.Localization
 @using FitnessDuck.Models
 @using FitnessDuck.Models.DTOs
 @using FitnessDuck.Share.Clients.Implementations
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.Localization
 @page "/"
 
-
+@inject LessonApiClient _lesson
+@inject IStringLocalizer<Localizations> _localizer
+@inject ICalendardService _calendar
 
 <PageTitle>Home</PageTitle>
 
-<ScrollCalendarLayout />
+<LessonsLayout/>
+
+
+
+@code
+{
+    
+}

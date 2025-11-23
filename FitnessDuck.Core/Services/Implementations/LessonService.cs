@@ -1,6 +1,7 @@
 using FitnessData.Core.Services.Interfaces;
 using FitnessDuck.Data.Entities;
 using FitnessDuck.Data.Repositories.Interfaces;
+using FitnessDuck.Models;
 using FitnessDuck.Models.DTOs;
 using MapsterMapper;
 
@@ -45,6 +46,11 @@ public class LessonService:ILessonService
             StartDateUtc =lessonDto.StartDateUtc,
             EndDateUtc =lessonDto.EndDateUtc,
             Seats = lessonDto.Seats,
+            TrainerId =  lessonDto.TrainerId,
+            Name = lessonDto.Name,
+            Description = lessonDto.Description,
+            AdvanceBookingDays = lessonDto.AdvanceBookingDays,
+            MinUnsubscribeHours =  lessonDto.MinUnsubscribeHours,
 
         });
         
@@ -60,7 +66,7 @@ public class LessonService:ILessonService
         
         
         var now = DateTime.Now;
-        var endDate = now.AddDays(21);
+        var endDate = now.AddDays(schedule.AdvanceBookingDays);
         var generatedLessons = new List<LessonDto>();
 
         for (DateTime day = now.Date; day <= endDate.Date; day = day.AddDays(1))
@@ -92,7 +98,12 @@ public class LessonService:ILessonService
                         ScheduleId = schedule.Id,
                         StartDateUtc = lessonStart,
                         EndDateUtc = lessonStart.AddMinutes(schedule.DurationMinutes),
-                        Seats = schedule.Seats
+                        Seats = schedule.Seats,
+                        Name = schedule.Name,
+                        Description = schedule.Description,
+                        TrainerId = schedule.TrainerId,
+                        AdvanceBookingDays = schedule.AdvanceBookingDays,
+                        MinUnsubscribeHours = schedule.MinUnsubscribeHours,
 
                     });
                 }
@@ -121,9 +132,19 @@ public class LessonService:ILessonService
          
          if (alreadyRegisterd)
              throw new Exception("You cannot subscribe to this lesson");
-         
-        
-         LessonEntity ret = await _lessonRepo.SubscribeToLesson(lessonId, userId);
+         var lesson = await _lessonRepo.GetByIdAsync(lessonId);
+
+         var overbooking = false;
+
+         if (lesson != null)
+         {
+             overbooking = lesson.Seats<=lesson.Bookings.Count(b => b.Status==BookingStatus.Confirmed);
+             
+         }
+
+
+
+         LessonEntity ret = await _lessonRepo.SubscribeToLesson(lessonId, userId,overbooking);
 
         
         return _mapper.Map<LessonDto>(ret);
@@ -141,4 +162,12 @@ public class LessonService:ILessonService
 
         
         return _mapper.Map<LessonDto>(ret);    }
+
+    public async Task<IEnumerable<LessonDto>> GetMyLessonsAsync(Guid userId)
+    {
+        var lessons = await _lessonRepo.GetMyLessonsAsync(userId);
+        
+        
+        
+        return _mapper.Map<IEnumerable<LessonDto>>(lessons);    }
 }

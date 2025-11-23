@@ -30,6 +30,9 @@
     private string _otpError = string.Empty;
 
     private bool _isLoading = false;
+
+[Parameter]public EventCallback<bool> onLoginAttempt { get; set; }
+    
     
     [Parameter]
     public string _email { get; set; }
@@ -84,13 +87,14 @@
                 // finish immediately if no edit
                 Snackbar.Add("Welcome!", Severity.Success);
                 
-                _nav.NavigateTo("/");
-                
+                //_nav.NavigateTo("/");
+                await onLoginAttempt.InvokeAsync(true);
             }
             else
             {
                 _otpError = "OTP invalid or expired";
                 Snackbar.Add(_otpError, Severity.Error);
+            await onLoginAttempt.InvokeAsync(false);
 
             }
         }

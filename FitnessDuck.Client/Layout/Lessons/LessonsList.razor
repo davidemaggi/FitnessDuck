@@ -1,0 +1,57 @@
+@using FitnessData.Core.Services.Interfaces
+@using FitnessDuck.Client.Localization
+@using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
+@using Microsoft.Extensions.Localization
+
+
+@inject IStringLocalizer<Localizations> _localizer
+
+    
+
+          
+<MudExpansionPanels Elevation="0" MultiExpansion="true" Class="overflow-y-scroll"> 
+    
+    @foreach(var day in _groupedLessonsList) {
+        
+        <MudExpansionPanel Text="@($"{_localizer[$"day_week_short_{day.Key.DayOfWeek.ToString().ToLower()}"]} {day.Key.Day}")" Expanded="true">
+            <MudStack Spacing="2">
+                @foreach (var lesson in day.AsQueryable())
+                {
+                 
+                    <LessonCard OnUnSubscribe="SubscriptionChangeHandler" OnSubscribe="SubscriptionChangeHandler" _lesson="lesson"/>
+                    
+                }
+            </MudStack>
+        </MudExpansionPanel>      
+    }
+  
+
+</MudExpansionPanels>
+
+
+
+@code{
+
+    [Parameter] public IEnumerable<LessonDto> _lessonsList { get; set; } = new List<LessonDto>();
+[Parameter] public EventCallback _onSubscriptionChange { get; set; }
+
+[Parameter] public  List<IGrouping<DateTime, LessonDto>> _groupedLessonsList{ get; set; } =new List<IGrouping<DateTime, LessonDto>>();
+
+
+protected override async Task OnInitializedAsync()
+{
+    //_startDay = _calendar.GetLastMonday();
+   
+}
+
+
+
+
+private async Task SubscriptionChangeHandler()
+{
+    await _onSubscriptionChange.InvokeAsync();
+}
+
+
+}

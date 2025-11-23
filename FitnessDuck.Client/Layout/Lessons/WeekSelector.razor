@@ -1,0 +1,18 @@
+<MudStack Justify="Justify.SpaceBetween" Row>
+    <MudButton OnClick="async ()=> await _onNPreviousWeekSelect.InvokeAsync()" Variant="Variant.Outlined"  StartIcon="@Icons.Material.Filled.ArrowLeft" Color="Color.Info"  Size="Size.Large"></MudButton>
+            
+    <MudButton OnClick="async ()=> await _onTodaySelect.InvokeAsync()" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.CalendarMonth" Color="Color.Info"  Size="Size.Medium">Oggi</MudButton>
+            
+    <MudButton OnClick="async ()=> await _onNextWeekSelect.InvokeAsync()" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ArrowRight" Color="Color.Info"  Size="Size.Large"></MudButton>
+
+</MudStack>
+
+@code {
+
+[Parameter] public EventCallback _onNextWeekSelect { get; set; }
+[Parameter] public EventCallback _onNPreviousWeekSelect { get; set; }
+[Parameter] public EventCallback _onTodaySelect { get; set; }
+    
+    
+    
+}

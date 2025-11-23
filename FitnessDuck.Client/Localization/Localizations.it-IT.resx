@@ -35,4 +35,40 @@
     <data name="lesson_name_not_found" xml:space="preserve">
         <value>Questa lezione non ha un nome</value>
     </data>
+    <data name="month_long_1" xml:space="preserve">
+        <value>Gennaio</value>
+    </data>
+    <data name="month_long_10" xml:space="preserve">
+        <value>Ottobre</value>
+    </data>
+    <data name="month_long_11" xml:space="preserve">
+        <value>Novembre</value>
+    </data>
+    <data name="month_long_12" xml:space="preserve">
+        <value>Dicembre</value>
+    </data>
+    <data name="month_long_2" xml:space="preserve">
+        <value>Febbraio</value>
+    </data>
+    <data name="month_long_3" xml:space="preserve">
+        <value>Marzo</value>
+    </data>
+    <data name="month_long_4" xml:space="preserve">
+        <value>Aprile</value>
+    </data>
+    <data name="month_long_5" xml:space="preserve">
+        <value>Maggio</value>
+    </data>
+    <data name="month_long_6" xml:space="preserve">
+        <value>Giugno</value>
+    </data>
+    <data name="month_long_7" xml:space="preserve">
+        <value>Luglio</value>
+    </data>
+    <data name="month_long_8" xml:space="preserve">
+        <value>Agosto</value>
+    </data>
+    <data name="month_long_9" xml:space="preserve">
+        <value>Settembre</value>
+    </data>
 </root>

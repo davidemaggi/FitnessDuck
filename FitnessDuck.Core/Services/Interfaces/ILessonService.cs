@@ -10,4 +10,5 @@ public interface ILessonService
     Task<IEnumerable<LessonDto>> GenerateLessonsFromSchedule(Guid scheduleId);
     Task<LessonDto> SubscribeToLesson(Guid lessonId, Guid userId);
     Task<LessonDto> UnsubscribeFromLesson(Guid lessonId, Guid userId);
+    Task<IEnumerable<LessonDto>> GetMyLessonsAsync(Guid userId);
 }

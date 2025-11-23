@@ -15,4 +15,5 @@ public interface IUserRepository: IRepository<UserEntity>
 
 
     Task<UserEntity?> GetByRefreshToken(string refreshToken);
+    Task<IEnumerable<UserEntity>> GetTrainers();
 } 

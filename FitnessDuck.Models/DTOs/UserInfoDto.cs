@@ -7,4 +7,9 @@ public class UserInfoDto
     public string? Surname { get; set; }
     public string Local { get; set; } = "it-IT";
     
+    
+    
+    
+    public string GetFullName()=> $"{Name} {Surname}";
+    
 }

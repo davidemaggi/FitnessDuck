@@ -12,6 +12,7 @@ public class LessonRepository : Repository<LessonEntity>, ILessonRepository
     public async Task<IEnumerable<LessonEntity>> GetUpcomingLessonsAsync(DateTime fromDate, DateTime toDate)
     {
         return await _dbSet
+            .Include(l => l.Trainer)
                 .Include(l=>l.Bookings)
                 .ThenInclude(l => l.User)
                 .Include(l=>l.Schedule)
@@ -23,6 +24,8 @@ public class LessonRepository : Repository<LessonEntity>, ILessonRepository
     public async Task<LessonEntity?> GetLessonWithBookingsAsync(Guid lessonId)
     {
         return await _dbSet
+            .Include(l => l.Trainer)
+                
             .Include(l => l.Bookings)
             .ThenInclude(b => b.User)
             .FirstOrDefaultAsync(l => l.Id == lessonId);
@@ -34,7 +37,7 @@ public class LessonRepository : Repository<LessonEntity>, ILessonRepository
     }
 
     public async Task<bool> isUserRegisteredtoLesson(Guid lessonId, Guid userId) => await _dbSet.AnyAsync(x=>x.Id==lessonId && x.Bookings.Any(b=>b.UserId == userId && b.Status != BookingStatus.Deleted));
-    public async Task<LessonEntity> SubscribeToLesson(Guid lessonId, Guid userId)
+    public async Task<LessonEntity> SubscribeToLesson(Guid lessonId, Guid userId, bool overbooking)
     {
        
 
@@ -44,7 +47,8 @@ public class LessonRepository : Repository<LessonEntity>, ILessonRepository
             UserId = userId,
             Id = Guid.NewGuid(),
             LessonId = lessonId,
-            BookingDateUtc =  DateTime.UtcNow
+            BookingDateUtc =  DateTime.UtcNow,
+            Status = overbooking ? BookingStatus.Pending : BookingStatus.Confirmed
         });
 
         await _context.SaveChangesAsync();
@@ -79,4 +83,10 @@ public class LessonRepository : Repository<LessonEntity>, ILessonRepository
             throw new InvalidOperationException("Lesson not found.");
 
         return updated;    }
+
+    public async Task<IEnumerable<LessonEntity>> GetMyLessonsAsync(Guid userId) => await _dbSet
+        .Include(x=>x.Schedule)
+        .Include(x=>x.Trainer)
+        .Where(x =>
+        x.Bookings.Any(b => b.UserId == userId && b.Status != BookingStatus.Deleted)).ToListAsync();
 }

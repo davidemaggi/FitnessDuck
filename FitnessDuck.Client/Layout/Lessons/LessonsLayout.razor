@@ -1,0 +1,68 @@
+@using FitnessData.Core.Services.Interfaces
+@using FitnessDuck.Client.Localization
+@using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
+@using Microsoft.Extensions.Localization
+@inject LessonApiClient _lesson
+@inject IStringLocalizer<Localizations> _localizer
+@inject ICalendardService _calendar
+
+
+<MudStack Justify="Justify.Center" StretchItems="StretchItems.End" Class="overflow-scroll">
+    <MudStack  StretchItems="StretchItems.Start">
+    <MudText Align="Align.Center" Typo="Typo.h6">@_localizer[_monthName] </MudText>
+    </MudStack>
+    <WeekSelector _onNextWeekSelect="async () => await ChangeWeek(1)" _onNPreviousWeekSelect="async () => await ChangeWeek(-1)" _onTodaySelect="async () => await Today()"/>
+    <LessonsList _groupedLessonsList="upcomingWeekGrouped" _lessonsList="upcomingWeek" _onSubscriptionChange="LoadWeek"/>
+</MudStack>
+
+
+
+@code
+{
+    private DateTime _startDay =DateTime.Today;
+    private IEnumerable<LessonDto> upcomingWeek = new List<LessonDto>();
+    private List<IGrouping<DateTime, LessonDto>>  upcomingWeekGrouped = new ();
+    private string _monthName = $"month_long_1";
+
+    protected override async Task OnInitializedAsync()
+    {
+        //_startDay = _calendar.GetLastMonday();
+        await LoadWeek();
+    }
+    
+    
+    async Task LoadWeek()
+    {
+
+        _monthName = $"month_long_{_startDay.Month}";
+        
+        upcomingWeek = await _lesson.GetUpcomingLessons(_startDay,_startDay.AddDays(7));
+        
+        upcomingWeekGrouped= upcomingWeek.GroupBy(l => l.StartDateUtc.Date)
+            .OrderBy(g => g.Key)
+            .ToList();
+
+        if (upcomingWeekGrouped.Any())
+        {
+            _monthName = $"month_long_{upcomingWeekGrouped[0].Key.Month}";
+
+        }
+
+        StateHasChanged();
+    }
+    
+    
+
+    async Task ChangeWeek(int n)
+    {
+        _startDay = _startDay.AddDays(7*n);
+        await LoadWeek();
+    }
+
+    async Task Today()
+    {
+        _startDay = DateTime.Today;
+        await LoadWeek();
+    }
+}

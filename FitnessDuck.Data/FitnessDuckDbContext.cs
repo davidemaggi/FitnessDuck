@@ -55,6 +55,9 @@ public class FitnessDuckDbContext:DbContext
                   .HasForeignKey(l => l.ScheduleId)
                   .OnDelete(DeleteBehavior.Cascade);
             
+            entity.HasOne(b => b.Trainer)
+                .WithMany(u => u.Schedules)
+                .HasForeignKey(b => b.TrainerId);
             
             
             entity.Property(e => e.WeekPlan).HasConversion(
@@ -76,6 +79,11 @@ public class FitnessDuckDbContext:DbContext
             entity.HasOne(b => b.Schedule)
                 .WithMany(l => l.Lessons)
                 .HasForeignKey(b => b.ScheduleId);
+            
+            entity.HasOne(b => b.Trainer)
+                .WithMany(u => u.Lessons)
+                .HasForeignKey(b => b.TrainerId);
+            
         });
 
         // User

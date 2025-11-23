@@ -17,7 +17,6 @@ using Microsoft.JSInterop;
 using MudBlazor;
 using MudBlazor.Translations;
 
-
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
@@ -40,6 +39,18 @@ builder.Services.AddHttpClient<AuthApiClient>(client =>
     .AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
 
 builder.Services.AddHttpClient<LessonApiClient>(client =>
+    {
+        client.BaseAddress = new Uri("http://localhost:5235/");
+    })
+    .AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
+
+builder.Services.AddHttpClient<ScheduleApiClient>(client =>
+    {
+        client.BaseAddress = new Uri("http://localhost:5235/");
+    })
+    .AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
+
+builder.Services.AddHttpClient<TrainerApiClient>(client =>
     {
         client.BaseAddress = new Uri("http://localhost:5235/");
     })

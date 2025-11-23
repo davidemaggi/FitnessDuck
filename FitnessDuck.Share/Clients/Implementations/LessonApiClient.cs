@@ -25,6 +25,18 @@ public class LessonApiClient
         return result;
     }
     
+    public async Task<IEnumerable<LessonDto>> GetMyLessons()
+    {
+        var response = await _httpClient.GetAsync("api/Lessons/mySubscriptions");
+        if(!response.IsSuccessStatusCode) return null;
+
+        var result = await response.Content.ReadFromJsonAsync<IEnumerable<LessonDto>>();
+        return result;
+    }
+    
+    
+    
+    
     public async Task<IEnumerable<LessonDto>> GetUpcomingLessons(DateTime? from, DateTime? to)
     {
         

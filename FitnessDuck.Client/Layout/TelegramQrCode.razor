@@ -1,0 +1,30 @@
+@using QRCoder
+
+
+
+<MudImage Src=@($"data:image/png;base64,{_data}") Width="250" Height="250" Alt="QRCODE" Elevation="25" Class="rounded-lg ma-4"/>
+
+
+@code {
+
+// Create a bookmark payload
+    string svg=string.Empty;
+    string _data=string.Empty;
+    [Parameter] public string url { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        var bookmarkPayload = new PayloadGenerator.Url(url);
+
+// Generate the QR code data from the payload
+
+        using var qrCodeData = QRCodeGenerator.GenerateQrCode(bookmarkPayload, QRCodeGenerator.ECCLevel.H);
+
+      
+        PngByteQRCode qrCode = new PngByteQRCode(qrCodeData);
+        byte[] qrCodeAsPngByteArr = qrCode.GetGraphic(5); // --> also read the readme
+        _data= Convert.ToBase64String(qrCodeAsPngByteArr, 0, qrCodeAsPngByteArr.Length);
+
+    }
+
+}

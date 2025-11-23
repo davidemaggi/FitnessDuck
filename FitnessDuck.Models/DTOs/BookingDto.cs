@@ -7,6 +7,6 @@ public class BookingDto
     public Guid UserId { get; set; }
     public DateTime BookingDateUtc { get; set; }
     public BookingStatus Status { get; set; } = BookingStatus.Pending;
-    public UserDto User { get; set; } = default!;
+    public UserInfoDto User { get; set; } = default!;
     public LessonDto Lesson { get; set; } = default!;
 }

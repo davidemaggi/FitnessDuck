@@ -1,0 +1,34 @@
+@page "/admin"
+@using FitnessDuck.Client.Layout.Schedules
+@using FitnessDuck.Models
+@using FitnessDuck.Models.Common
+@using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+
+
+@attribute [Authorize]
+
+
+<MudTabs Color="Color.Info" Outlined="true">
+    <AuthorizeView Roles="Admin">
+        <Authorized>
+            <MudTabPanel Text="Schedules" Icon="@Icons.Material.Filled.CalendarMonth">
+                <SchedulesLayout/>
+            </MudTabPanel>
+        </Authorized>
+    </AuthorizeView>
+    <AuthorizeView >
+        <Authorized>
+            <MudTabPanel Text="My Info" Icon="@Icons.Material.Filled.PersonOutline">
+                <UserLayout/>
+            </MudTabPanel>
+        </Authorized>
+        
+    </AuthorizeView>
+
+    
+    
+  
+</MudTabs>

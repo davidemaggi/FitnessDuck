@@ -2,19 +2,39 @@
 
 
 
-<MudPaper Class="pa-6 mx-auto" MaxWidth="400px">
-    
-    @if (waitForOtp)
-    {
-        <ValidateOtp _email=@_email />
-    }
-    else
-    {
-        <SendOtp onOtpSent="OnOtpChangedHandler" />
-    }
 
 
-</MudPaper>
+<MudDialog>
+    <TitleContent>
+        Accedi
+    </TitleContent>
+    <DialogContent>
+        @if (waitForOtp)
+        {
+            <ValidateOtp onLoginAttempt="Cancel"  _email=@_email />
+        }
+        else
+        {
+            <SendOtp onOtpSent="OnOtpChangedHandler" />
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">OK</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog.Cancel();
+}
+
+
+
+
 
 @code {
 

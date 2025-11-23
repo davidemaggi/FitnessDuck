@@ -17,6 +17,8 @@ public class UserEntity:BaseEntity
     public ICollection<NotificationsOutboxEntity> PendingMessages { get; set; } = new List<NotificationsOutboxEntity>();
 
     public ICollection<BookingEntity> Bookings { get; set; } = new List<BookingEntity>();
+    public ICollection<ScheduleEntity> Schedules { get; set; } = new List<ScheduleEntity>();
+    public ICollection<LessonEntity> Lessons { get; set; } = new List<LessonEntity>();
     public string? PushSubscription { get; set; }
     public string Local { get; set; } = "it-IT";
     

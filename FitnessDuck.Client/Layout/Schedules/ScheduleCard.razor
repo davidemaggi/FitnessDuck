@@ -1,0 +1,56 @@
+@using FitnessDuck.Client.Localization
+@using FitnessDuck.Models.DTOs
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<Localizations> _localizer
+
+
+
+<MudCard Elevation="1" Class="pa-4" Style="border-radius:16px; max-width:420px;">
+    <MudStack>
+        <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h5" Class="fw-bold">@_Schedule.Name</MudText>
+            <MudStack  Spacing="2" Row>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Info" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+            </MudStack>
+        </MudStack>
+
+        <MudText Typo="Typo.subtitle1" Class="mt-1">@(_Schedule.Trainer?.Name ?? "")</MudText>
+        <MudText Typo="Typo.body2" Class="mt-2 mb-2">@(_Schedule.Description ?? "")</MudText>
+        
+        <MudStack Row Spacing="4">
+            <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+                <MudIcon Icon="@Icons.Material.Filled.Schedule" />
+                <MudText Typo="Typo.body2">@_Schedule.DurationMinutes min</MudText>
+            </MudStack>
+            <MudStack Row Spacing="1" AlignItems="AlignItems.Center">
+                <MudIcon Icon="@Icons.Material.Filled.Groups" />
+                <MudText Typo="Typo.body2">Max @_Schedule.Seats</MudText>
+            </MudStack>
+        </MudStack>
+        
+        <MudDivider Class="my-2" />
+        
+        <MudText Typo="Typo.subtitle2" Class="mb-1">Orari settimanali</MudText>
+        <MudStack Spacing="1">
+            @foreach (var day in _Schedule.WeekPlan.Where(x=>x.IsActive))
+            {
+                <MudText Typo="Typo.body2">@_localizer[$"day_week_short_{day.DayOfWeek.ToString().ToLower()}"]</MudText>
+                <MudStack Row Justify="Justify.FlexEnd">
+                    @foreach (var slot in day.Slots)
+                    {
+
+                    <MudText Typo="Typo.body2">@slot.GetTimeString()</MudText>
+
+                    }
+                    
+                </MudStack>
+            }
+        </MudStack>
+    </MudStack>
+</MudCard>
+@code {
+    
+    [Parameter] public ScheduleDto _Schedule { get; set; }
+    
+}

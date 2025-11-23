@@ -1,24 +1,56 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
-    <MudNavMenu>
-        <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-        <MudNavLink Href="counter" Icon="@Icons.Material.Filled.AddBox">
-            Counter
-        </MudNavLink>
-        <MudNavLink Href="weather" Icon="@Icons.Material.Filled.ListAlt">
-            Weather
-        </MudNavLink>
-        <AuthorizeView>
-            <Authorized>
-                    <MudNavLink Href="user" Icon="@Icons.Material.Filled.Person">
-                        My Info
-                    </MudNavLink>
-            </Authorized>
-            <NotAuthorized>
-                    <MudNavLink Href="login" Icon="@Icons.Material.Filled.Login">
-                        Login
-                    </MudNavLink>
-            </NotAuthorized>
-        </AuthorizeView>
-    </MudNavMenu>
+@inject NavigationManager NavigationManager
+
+@inject IDialogService DialogService
 
 
+<MudStack Justify="Justify.SpaceEvenly" Row>
+
+
+    <MudButton Variant="@(GetVariant("/"))" Href="/" StartIcon="@Icons.Material.Filled.CalendarMonth" Color="Color.Info"  Size="Size.Small">Prenota</MudButton>
+    <AuthorizeView>
+        <Authorized  >
+            <MudButton Variant="@(GetVariant("user"))" Href="user" StartIcon="@Icons.Material.Filled.PersonOutline" Color="Color.Info"  Size="Size.Small">Profilo</MudButton>
+        </Authorized>
+        <NotAuthorized>
+            <MudButton Variant="@(GetVariant("login"))" OnClick="OpenLoginDialogAsync" StartIcon="@Icons.Material.Filled.Login" Color="Color.Info"  Size="Size.Small">Accedi</MudButton>
+        </NotAuthorized>
+    </AuthorizeView>
+    <AuthorizeView Roles="Admin">
+        <Authorized  >
+            <MudButton Variant="@(GetVariant("admin"))" Href="admin" StartIcon="@Icons.Material.Filled.Settings" Color="Color.Info"  Size="Size.Small">Gestisci</MudButton>
+        </Authorized>
+    </AuthorizeView>
+</MudStack>
+
+
+@code {
+    
+    private Task OpenLoginDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+
+        return DialogService.ShowAsync<LoginLayout>("Login", options);
+    }
+    
+    
+    
+    string GetPageName()
+    {
+        var path = new Uri(NavigationManager.Uri).AbsolutePath;
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return segments.Length > 0 ? segments[0].ToLower() : string.Empty;
+    }
+    
+    Variant GetVariant(string href)
+    {
+        // Clean and lowercase href for comparison
+        var hrefPage = href.Trim('/').ToLower();
+
+        // Home "/" case
+        if (string.IsNullOrWhiteSpace(hrefPage))
+            return GetPageName() == string.Empty ? Variant.Filled : Variant.Outlined;
+
+        return GetPageName() == hrefPage ? Variant.Filled : Variant.Outlined;
+    }
+}

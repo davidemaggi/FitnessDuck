@@ -21,7 +21,6 @@ public class LessonsController : Controller
     }
 
     [HttpGet("upcoming")]
-    [ProducesResponseType(404)]
     [ProducesResponseType(200, Type = typeof(IEnumerable<LessonDto>))]
     public async Task<IActionResult> GetUpcomingLessons([FromQuery] string? fromStr, [FromQuery] string? toStr)
     {
@@ -42,6 +41,30 @@ public class LessonsController : Controller
         
         
         return Ok(lessonDtos);
+    }
+    
+    
+    [Authorize]
+    [HttpGet("mySubscriptions")]
+    [ProducesResponseType(200, Type = typeof(IEnumerable<LessonDto>))]
+    public async Task<IActionResult> GetMySubscriptions()
+    {
+        IEnumerable<LessonDto> ret= new List<LessonDto>();
+
+       
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        
+        if (userId!=null)
+            ret = await _lessonService.GetMyLessonsAsync(Guid.Parse(userId));
+
+    
+         
+           
+
+        
+        
+        return Ok(ret);
     }
     
     [Authorize]

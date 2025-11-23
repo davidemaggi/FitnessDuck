@@ -34,7 +34,7 @@ public partial class TelegramBotService
                 var parts = messageText.Split(' ', 2);
                 if (parts.Length < 2 || string.IsNullOrWhiteSpace(parts[1]))
                 {
-                    await botClient.SendMessage(chatId, "Please provide a confirmation code after /confirm command.", cancellationToken: cancellationToken);
+                    await botClient.SendMessage(chatId, "Please provide a confirmation code after /start command.", cancellationToken: cancellationToken);
                     return;
                 }
 

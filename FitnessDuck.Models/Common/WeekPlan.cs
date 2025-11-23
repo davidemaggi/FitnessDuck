@@ -39,4 +39,11 @@ public class HourPlan
 {
     public int Hour { get; set; }
     public int Minute { get; set; }
+
+    public string? GetTimeString()
+    {
+       
+        var min=   Minute < 10 ? $"0{Minute}" : Minute.ToString();
+        return $"{Hour}:{min}";
+    }
 }

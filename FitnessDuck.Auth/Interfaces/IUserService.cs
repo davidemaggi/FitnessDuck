@@ -13,4 +13,5 @@ public interface IUserService
     Task<UserDto?> GetByTelegramIdAsync(string telegramId);
     Task<UserDto> ConfirmContactMethod(ContactMethod contactMethod, UserDto user, string chatId="");
     Task<UserDto> GetByRefreshToken(string requestRefreshToken);
+    Task<IEnumerable<UserInfoDto>> GetTrainers();
 }

@@ -48,6 +48,7 @@ public class UserRepository : Repository<UserEntity>, IUserRepository
     }
 
     public async Task<UserEntity?> GetByRefreshToken(string refreshToken) => await _dbSet.Include(u=>u.RefreshTokens).FirstOrDefaultAsync(u=>u.RefreshTokens.Any(r=>r.Token == refreshToken));
+    public async Task<IEnumerable<UserEntity>> GetTrainers() => await _dbSet.Where(u => u.Role == UserRole.Trainer || u.Role == UserRole.Admin).ToListAsync();
 
     public async Task<UserEntity?>GetByEmailAsync(string email) {return await _dbSet.Include(u=>u.RefreshTokens).FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());} 
 

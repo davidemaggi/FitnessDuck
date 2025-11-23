@@ -1,25 +1,112 @@
+@using FitnessDuck.Client.Layout.Lessons
 @using FitnessDuck.Models.DTOs
 @using FitnessDuck.Share.Clients.Implementations
 @inject AuthApiClient _authApiClient
 @inject NavigationManager _navManager
+@inject LessonApiClient _lessons
 
-<h3>UserLayout</h3>
 @if(!_loading)
 {
-    
-    
-    <MudPaper Class="pa-4">
-        <MudForm @ref="form" @bind-IsValid="@success" @bind-Errors="@errors">
-            <MudTextField @bind-Value="_user.Name" T="string" Label="Name" Required="true" RequiredError="Name is required!" />
-            <MudTextField @bind-Value="_user.Surname" T="string" Label="Surname" Required="true" RequiredError="Surname is required!" />
-        </MudForm>   
-    </MudPaper>
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="overflow-y-scroll pa-2">
 
-<MudButton OnClick="UpdateUserInfo">Update</MudButton>
+    <!-- Profile Section -->
+    <MudText Typo="Typo.h6" Class="mb-2">Il mio profilo</MudText>
+    <MudCard Elevation="1" Class="mb-2" >
+        <MudStack Spacing="2" Class="pa-4">
+            <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                <MudAvatar Size="Size.Large" Class="elevation-0" />
+               
+                    <MudForm @ref="form" @bind-IsValid="@success" @bind-Errors="@errors">
+                        <MudStack>
+                <MudStack Row> 
+                            <MudTextField Disabled="!_editing" Typo="Typo.subtitle1" Class="text-white" @bind-Value="_user.Name" T="string" Label="Name" Required="true" RequiredError="Name is required!"/>
+                            
+                            <MudTextField Disabled="!_editing" @bind-Value="_user.Surname" T="string" Label="Surname" Required="true" RequiredError="Surname is required!"/>
+
+                            @if(!_editing){
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Info" OnClick="() => _editing=true" />
+                            }
+                            else
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Error" OnClick="UpdateUserInfo" />
+                            }
+                            
+                </MudStack>
+                        
+                        
+                            
+                            <MudText Typo="Typo.caption" Class="text-white">Membro attivo</MudText>
+                        </MudStack>
+                    </MudForm>   
+                
+            </MudStack>
+        </MudStack>
+    </MudCard>
+
+    <!-- QR Code Section -->
+    <MudCard Elevation="1" Class="mb-2" Style="border-radius:16px;">
+        <MudStack AlignItems="AlignItems.Center" Spacing="1" Class="pa-4">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">Il tuo QR Code</MudText>
+
+                @if (!_user.TelegramConfirmed)
+                {
+                <TelegramQrCode url=@QrUrl />
+
+                }
+                else
+                {
+                    <TelegramQrCode url=@QrUrl />
+                }
+           
+            <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-2">
+                Usa Questo Codide per attivare le funzionalità di telegram
+            </MudText>
+        </MudStack>
+    </MudCard>
+
+    <!-- Subscription Section -->
+    <MudStack StretchItems="StretchItems.Start" Row>
+        <MudText Typo="Typo.h6" Class="mb-2">Le mie iscrizioni</MudText>
+        <MudChip T="string" Color="Color.Info">@_myLessons.Count()</MudChip>
+    </MudStack>
+    <MudCard Elevation="1" Class="overflow-y-scroll pa-4"  Style="border-radius:16px; max-height: 200px">
+        @if(!_loadingLessons){
+        <MudStack  Spacing="2" Class="pa-4">
+            @if(!_myLessons.Any()){
+                <MudStack AlignItems="AlignItems.Center" Spacing="1" Class="mt-4 mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Color="Color.Default" Size="Size.Large"/>
+                    <MudText Typo="Typo.caption" Align="Align.Center">
+                        Vai alla sezione Prenota per iscriverti alle lezioni
+                    </MudText>
+                </MudStack>
+            }
+            else
+            {
+                foreach (var lesson in _myLessons)
+                {
+                    <LessonCardSmall OnUnSubscribe="LoadMyLessons" _lesson="lesson" ></LessonCardSmall>
+                }
+                
+                
+            }
+        </MudStack>}
+        else
+        {
+            <MudStack  AlignItems="AlignItems.Center">
+                <MudProgressCircular Indeterminate="true" Size="Size.Small"></MudProgressCircular>
+            </MudStack>
+        }
+    </MudCard>
+</MudContainer>
+   
+
+    
+
+
     
     
     
-    <MudButton OnClick="LogOutAsync">Logout</MudButton>
+    <MudButton Color="Color.Error" StartIcon="@Icons.Material.Filled.Logout" OnClick="LogOutAsync">Esci</MudButton>
 
 }
 else
@@ -30,19 +117,41 @@ else
 
 @code {
     bool _loading = true;
+    bool _loadingLessons = false;
     UserDto _user;
     bool success;
     string[] errors = { };
     MudForm form;
+    bool _editing = false;
+    string QrUrl=string.Empty;
+    
+    IEnumerable<LessonDto> _myLessons =new List<LessonDto>();
     
     protected override async Task OnInitializedAsync()
     {
         _user = await _authApiClient.MeAsync();
+        _myLessons = await _lessons.GetMyLessons();
+
         _loading = false;
+
+        if (_user is not null && !_user.TelegramConfirmed)
+        {
+            QrUrl=string.Format("https://t.me/fitnessduckdev_bot?start={0}", _user.TelegramConfirmationKey);
+
+        }
+        else
+        {
+            QrUrl=string.Format("https://t.me/fitnessduckdev_bot");
+
+        }
+
+
+
     }
 
     private async Task UpdateUserInfo()
     {
+        
         
         await _authApiClient.UpdateUserInfo(new UserInfoDto
         {
@@ -52,6 +161,8 @@ else
             Local = _user.Local
         });
 
+        _editing = false;
+        
     }
 
     private async Task LogOutAsync()
@@ -61,6 +172,14 @@ else
 
     }
 
-    
+
+    private async Task LoadMyLessons()
+    {
+        _loadingLessons = true;
+        _myLessons = await _lessons.GetMyLessons();
+    _loadingLessons = false;
+        
+        //StateHasChanged();
+    }
 
 }

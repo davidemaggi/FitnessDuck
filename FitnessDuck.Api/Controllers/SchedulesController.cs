@@ -22,14 +22,12 @@ public class SchedulesController : Controller
     }
 
     [HttpGet]
-    [ProducesResponseType(404)]
     [ProducesResponseType(200, Type = typeof(IEnumerable<ScheduleDto>))]
     public async Task<IActionResult> GetAllSchedules()
     {
         var scheduleDtos = await _scheduleService.GetAllSchedulesAsync();
 
-        if (!scheduleDtos.Any())
-            return NotFound();
+       
         
         return Ok(scheduleDtos);
     }

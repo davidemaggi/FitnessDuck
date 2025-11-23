@@ -43,6 +43,7 @@ public async Task<ScheduleDto> SaveScheduleAsync(SaveScheduleDto payload)
 
             Id = payload.Id ?? Guid.NewGuid(),
             Name = payload.Name,
+            Description = payload.Description,
             Icon = payload.Icon,
             TrainerId = payload.TrainerId,
             Recurrence = payload.Recurrence,

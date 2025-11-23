@@ -1,0 +1,225 @@
+@using FitnessDuck.Client.Localization
+@using FitnessDuck.Models
+@using FitnessDuck.Models.Common
+@using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
+@using Microsoft.Extensions.Localization
+@inject ScheduleApiClient _schedules
+@inject AuthApiClient _auth
+@inject TrainerApiClient _trainerClient
+@inject IStringLocalizer<Localizations> _localizer
+
+
+<MudDialog>
+
+    <DialogContent>
+        @if (!loading)
+        {
+        
+        <MudForm @ref="form" Model="@_schedule" OnValidSubmit="Save">
+
+            <MudTextField Label="Nome lezione" @bind-Value="_schedule.Name" Required="true"/>
+            <MudSelect T="Guid?" @bind-Value="_schedule.TrainerId"
+                       Variant="Variant.Filled"
+                       Label="Istruttore"
+
+                       ReadOnly="false"
+                       Placeholder="Istruttore"
+                       HelperText="Scegli l'istruttore"
+
+                       Clearable="true"
+                       Modal="true">
+                @foreach (var trainer in _trainers)
+                {
+                    <MudSelectItem T="Guid?" Value="trainer.Id">@trainer.Name</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField Label="Descrizione" @bind-Value="_schedule.Description" Lines="2"/>
+
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField Label="Durata (minuti)" @bind-Value="_schedule.DurationMinutes" Type="number" Required="true"/>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField Label="Posti disponibili" @bind-Value="_schedule.Seats" Type="number"/>
+                </MudItem>
+            </MudGrid>
+
+            <MudText Typo="Typo.subtitle2" Class="mt-3 mb-2">Slot settimanali</MudText>
+            <MudStack Spacing="2">
+                @foreach (var dayPlan in _schedule.WeekPlan)
+                {
+                    <MudPaper Class="px-2 py-1 mb-2" Style="border-radius:8px;">
+                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.body2" Class="fw-bold" Style="width:72px;">@_localizer[$"day_week_short_{dayPlan.DayOfWeek.ToString().ToLower()}"]</MudText>
+                            <MudSwitch T="bool" @bind-Value="dayPlan.IsActive" Color="Color.Primary" Label="Attivo" />
+
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Disabled="@(!dayPlan.IsActive)" OnClick="@(()=>AddSlot(dayPlan))">
+                                Aggiungi slot
+                            </MudButton>
+                        </MudStack>
+
+                        @if (dayPlan.IsActive && dayPlan.Slots.Count == 0)
+                        {
+                            <MudText Typo="Typo.caption" Class="ms-6">Nessun slot aggiunto</MudText>
+                        }
+                        @if (dayPlan.IsActive && dayPlan.Slots.Count > 0)
+                        {
+                            <MudStack Class="ms-6" Spacing="1">
+                                @for (int i = 0; i < dayPlan.Slots.Count; i++)
+                                {
+                                    var slot = dayPlan.Slots[i];
+                                    <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudTextField Label="Ora" @bind-Value="slot.Hour" Type="number" Min="0" Max="23" Style="width:60px;" Required="true" Margin="Margin.Dense" />
+                                        <MudText>:</MudText>
+                                        <MudTextField Label="Minuto" @bind-Value="slot.Minute" Type="number" Min="0" Max="59" Style="width:60px;" Required="true" Margin="Margin.Dense" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveSlot(dayPlan, slot))" Edge="Edge.End" />
+                                    </MudStack>
+                                }
+                            </MudStack>
+                        }
+                    </MudPaper>
+                }
+            
+            </MudStack>
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="int" @bind-Value="_schedule.AdvanceBookingDays"
+                               Variant="Variant.Filled"
+                               Label="Genera le lezioni"
+
+                               ReadOnly="true"
+                               Placeholder="Istruttore"
+                               HelperText="Queste Lezioni verranno generate con un anticipo di  quanti giorni"
+
+                               Clearable="false"
+                               Modal="true">
+                        <MudSelectItem T="int" Value="366">-</MudSelectItem>
+                        <MudSelectItem T="int" Value="31">Mensile</MudSelectItem>
+                        <MudSelectItem T="int" Value="7">Settimanale</MudSelectItem>
+                        <MudSelectItem T="int" Value="183">Semestrale</MudSelectItem>
+                        <MudSelectItem T="int" Value="365">Annuale</MudSelectItem>
+
+
+                    </MudSelect>                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField Label="Anticipo Annullamento" @bind-Value="_schedule.MinUnsubscribeHours" Type="number"/>
+                </MudItem>
+            </MudGrid>
+                
+                
+                
+        </MudForm>}
+
+        else
+        {
+            <MudProgressLinear Indeterminate="true" Size="Size.Large"></MudProgressLinear>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Annulla</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save">Salva modifiche</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    MudForm form;
+
+
+    private bool loading=true;
+    IEnumerable<UserInfoDto> _trainers { get; set; } = new List<UserInfoDto>();
+    UserDto _me { get; set; } = new();
+    
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter] public ScheduleDto _schedule { get; set; }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _me = await _auth.MeAsync();
+        
+        _trainers = await _trainerClient.GetAllTrainers();
+        
+        if (_schedule is null)
+        {
+           
+            
+            _schedule = new ScheduleDto
+            {
+                Id = Guid.NewGuid(),
+              
+                TrainerId = _me.Id,
+                Recurrence = RecurrenceType.WeekPlan,
+                StartDateUtc = DateTime.UtcNow.Date
+
+            };
+            
+        }
+
+        loading = false;
+
+    }
+
+    
+
+    void AddSlot(DayPlan day)
+    {
+        day.Slots.Add(new HourPlan());
+    }
+
+    void RemoveSlot(DayPlan day, HourPlan slot)
+    {
+        day.Slots.Remove(slot);
+    }
+
+    
+
+    void Cancel()
+    {
+        MudDialog.Close(DialogResult.Cancel());
+    }
+
+    void Save()
+    {
+        if (form.IsValid)
+        {
+            // Save logic here
+            var toSave = new SaveScheduleDto
+            {
+                Id = _schedule.Id,
+                Name = _schedule.Name,
+            Description = _schedule.Description,
+                Icon = _schedule.Icon,
+                TrainerId = _me.Id,
+                Recurrence = _schedule.Recurrence,
+                WeekPlan = _schedule.WeekPlan,
+                DurationMinutes = _schedule.DurationMinutes,
+                Seats = _schedule.Seats,
+                MinUnsubscribeHours = _schedule.MinUnsubscribeHours,
+                AdvanceBookingDays = _schedule.AdvanceBookingDays,
+                StartDateUtc = _schedule.StartDateUtc,
+                EndDateUtc = _schedule.EndDateUtc,
+
+            };
+
+            //_schedule = await _schedules.SaveSchedule(toSave);
+            
+            
+            MudDialog.Close(DialogResult.Ok(toSave));
+        }
+    }
+
+    private string GetDayName(int day) => Enum.GetName(typeof(DayOfWeek), day);
+
+    public class WeeklySlot
+    {
+        public int DayOfWeek { get; set; } = 1; // Defaults to Lunedì
+        public int Hour { get; set; } = 18;
+        public int Minute { get; set; } = 0;
+    }
+}
+

@@ -1,4 +1,5 @@
 using FitnessDuck.Auth.Interfaces;
+using FitnessDuck.Data.Entities;
 using FitnessDuck.Data.Repositories.Interfaces;
 using FitnessDuck.Exceptions;
 using FitnessDuck.Models;
@@ -82,9 +83,9 @@ public class UserService : IUserService
         }
         
 
-        await _userRepository.Update(toConfirm);
+       var ret= await _userRepository.Update(toConfirm);
         
-        return _mapper.Map<UserDto>(user);
+        return _mapper.Map<UserDto>(ret);
     }
 
     public async Task<UserDto> GetByRefreshToken(string refreshToken)
@@ -96,4 +97,14 @@ public class UserService : IUserService
 
         
         return _mapper.Map<UserDto>(user);    }
+
+    public async Task<IEnumerable<UserInfoDto>> GetTrainers()
+    {
+        IEnumerable<UserEntity> trainers = await _userRepository.GetTrainers();
+        
+       
+
+        
+        return _mapper.Map<IEnumerable<UserInfoDto>>(trainers); 
+    }
 }
