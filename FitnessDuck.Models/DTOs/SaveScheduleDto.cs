@@ -20,5 +20,8 @@ public class SaveScheduleDto
     public int AdvanceBookingDays { get; set; } = 366;
     public DateTime? StartDateUtc { get; set; } = DateTime.UtcNow;
     public DateTime? EndDateUtc{ get; set; }
+    
+    public bool DeleteLessons { get; set; } = false;
+    
 
 }

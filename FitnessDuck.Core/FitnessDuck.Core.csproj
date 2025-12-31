@@ -10,6 +10,7 @@
       <ProjectReference Include="..\FitnessDuck.Data\FitnessDuck.Data.csproj" />
       <ProjectReference Include="..\FitnessDuck.Exceptions\FitnessDuck.Exceptions.csproj" />
       <ProjectReference Include="..\FitnessDuck.Models\FitnessDuck.Models.csproj" />
+      <ProjectReference Include="..\FitnessDuck.Notifications\FitnessDuck.Notifications.csproj" />
     </ItemGroup>
 
 </Project>

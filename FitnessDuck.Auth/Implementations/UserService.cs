@@ -34,6 +34,16 @@ public class UserService : IUserService
         return _mapper.Map<UserDto>(newuser);
     }
     
+    
+    public async Task<UserDto> SaveUserAsync(UserDto dto)
+    {
+        var newuser = await _userRepository.CreateUserAsync(dto);
+        return _mapper.Map<UserDto>(newuser);
+    }
+    
+    
+    
+    
     public async Task<UserDto> UpdateUserInfoAsync(UserInfoDto info)
     {
         
@@ -106,5 +116,26 @@ public class UserService : IUserService
 
         
         return _mapper.Map<IEnumerable<UserInfoDto>>(trainers); 
+    }
+
+    public async Task<IEnumerable<UserDto>> GetAll()
+    {
+        IEnumerable<UserEntity> trainers = await _userRepository.GetAllAsync();
+        
+       
+
+        
+        return _mapper.Map<IEnumerable<UserDto>>(trainers); 
+    }
+
+    public async Task<UserDto?> GetByIdAsync(Guid bookingUserId)
+    {
+        var user = await _userRepository.GetByIdAsync(bookingUserId);
+        
+        if (user is null)
+            return null;
+
+        
+        return _mapper.Map<UserDto>(user);
     }
 }

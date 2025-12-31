@@ -1,0 +1,244 @@
+@using FitnessDuck.Client.Localization
+@using FitnessDuck.Models
+@using FitnessDuck.Models.Common
+@using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
+@using Microsoft.Extensions.Localization
+@inject UserApiClient _users
+@inject AuthApiClient _auth
+@inject IStringLocalizer<Localizations> _localizer
+@inject ISnackbar _snackBar
+
+
+<MudDialog>
+
+    <DialogContent>
+        @if (!loading)
+        {
+        
+        <MudForm @ref="form" Model="@_user" OnValidSubmit="Save">
+
+            <MudTextField Label="Nome" @bind-Value="_user.Name" Required="true"/>
+            <MudTextField Label="Cognome" @bind-Value="_user.Surname" Required="true"/>
+            
+
+            @if (EmailValidation==1)
+            {
+            
+            <MudGrid>
+                <MudItem xs="12" sm="8">
+                    <MudTextField Label="OTP" @bind-Value="tmpOtp" Type="number" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudButton OnClick="ValidateOtp" Color="Color.Info" StartIcon="@Icons.Material.Filled.Edit">Conferma</MudButton>
+                </MudItem>
+            </MudGrid>
+            }else if (EmailValidation==2)
+            {
+                <MudGrid>
+                    <MudItem xs="12" sm="8">
+                        <MudTextField Label="Email" @bind-Value="_user.Email" Type="email" Required="true"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudButton OnClick="SendOtp" Color="Color.Error" StartIcon="@Icons.Material.Filled.Error">Riprova</MudButton>
+                    </MudItem>
+                </MudGrid>
+            }else if (EmailValidation==3)
+            {
+                <MudGrid>
+                    <MudItem xs="12" sm="8">
+                        <MudTextField Disabled="true" Label="Email" @bind-Value="_user.Email" Type="email" Required="true"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudButton Disabled="true"  Color="Color.Success" StartIcon="@Icons.Material.Filled.Check">Verificato</MudButton>
+                    </MudItem>
+                </MudGrid>
+            }
+            else
+            {
+                <MudGrid>
+                    <MudItem xs="12" sm="8">
+                        <MudTextField Label="Email" @bind-Value="_user.Email" Type="email" Required="true"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudButton OnClick="SendOtp" Color="Color.Info" StartIcon="@Icons.Material.Filled.Send">Verifica</MudButton>
+                    </MudItem>
+                </MudGrid>
+            }
+            <MudGrid>
+                <MudItem xs="12" sm="9">
+                    <MudSelect T="UserPlan" Label="Pacchetto" MultiSelection="false" @bind-Value="_user.Plan">
+                        <MudSelectItem T="UserPlan" Value="UserPlan.NoPlan">-</MudSelectItem>
+                        <MudSelectItem T="UserPlan" Value="UserPlan.Weekly">Ingressi Settimanale</MudSelectItem>
+                        <MudSelectItem T="UserPlan" Value="UserPlan.Monthly">Ingressi Mensile</MudSelectItem>
+                        <MudSelectItem T="UserPlan" Value="UserPlan.Carnet">Ingressi</MudSelectItem>
+                    </MudSelect>                
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudTextField Disabled="_user.Plan==UserPlan.NoPlan" Label="Ingressi" @bind-Value="_user.PlanAmount" Type="number" Required="false"/>             
+                </MudItem>
+            </MudGrid>
+            <MudDatePicker Disabled="_user.Plan==UserPlan.NoPlan" Label="Scadenza" @bind-Date="_user.PlanExpiration"/>
+        </MudForm>}
+
+        else
+        {
+            <MudProgressLinear Indeterminate="true" Size="Size.Large"></MudProgressLinear>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Annulla</MudButton>
+        <MudButton Disabled="!ValidAndVerified()" Variant="Variant.Filled" Color="Color.Primary" OnClick="Save">Salva modifiche</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    MudForm form;
+
+
+    private string tmpOtp;
+    private string lastOtpSent;
+    
+    private bool loading=true;
+    UserDto _me { get; set; } = new();
+
+private int EmailValidation=0; //o: no, 1: pending, 2:fail, 3:verified
+    
+    
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter] public UserDto _user { get; set; }
+
+    [Parameter] public FormMode _mode { get; set; } = FormMode.Create;
+    
+    public bool ValidAndVerified() => form is not null && form.IsValid && EmailValidation==3;
+    public bool DisabledIfEdit() => _mode==FormMode.Edit || _mode==FormMode.View;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _me = await _auth.MeAsync();
+        
+        
+        if (_user is null)
+        {
+           
+            
+            _user = new UserDto()
+            {
+                Id = Guid.NewGuid()
+              
+                
+
+            };
+            
+        }
+
+        if (_user.EmailConfirmed)
+        {
+            EmailValidation = 3;
+
+            //await form.Validate();
+        }
+
+
+
+        loading = false;
+
+    }
+
+    
+
+     async Task SendOtp()
+     {
+         lastOtpSent = _user.Email;
+        
+        await _auth.RequestTokenAsync(new RequestTokenDto
+        {
+            Contact = _user.Email,
+            ContactMethod = ContactMethod.Email
+        });
+
+        EmailValidation = 1;
+        _snackBar.Add("OTP Sent", Severity.Info); 
+     }
+
+    
+    async Task ValidateOtp()
+    {
+       var tmp= await _auth.ValidateTokenOnlyAsync(new ValidateTokenDto()
+        {
+            Contact = _user.Email,
+            ContactMethod = ContactMethod.Email,
+            Token = tmpOtp
+        });
+
+        if (tmp)
+        {
+            _snackBar.Add("Email Verified", Severity.Success); 
+            EmailValidation = 3;
+
+        }
+        else
+        {
+            _snackBar.Add("Verification Failed", Severity.Error);
+        EmailValidation = 2;
+
+        }
+
+        EmailValidation = tmp ? 3 : 2;
+
+
+    }
+    
+
+    void Cancel()
+    {
+        MudDialog.Close(DialogResult.Cancel());
+    }
+
+    async Task Save()
+    {
+        if (form.IsValid)
+        {
+            // Save logic here
+            
+            var toSave = new UserDto
+            {
+                Id = _user.Id,
+                Email = _user.Email,
+              
+                Name = _user.Name,
+                Surname = _user.Surname,
+                Role = _user.Role,
+                EmailConfirmed = true,
+              
+                Plan = _user.Plan,
+                PlanAmount = _user.PlanAmount,
+                PlanExpiration = _user.PlanExpiration,
+                RegistrationDate = DateTime.UtcNow,
+            };
+
+            var res= await _users.Save(toSave);
+            if (res is null)
+            {
+            
+
+            _snackBar.Add("Error Saving User", Severity.Error);
+            }
+            else
+            {
+            
+
+            _user = res;
+            
+            
+            MudDialog.Close(DialogResult.Ok(_user));}
+        }
+    }
+
+   
+}
+

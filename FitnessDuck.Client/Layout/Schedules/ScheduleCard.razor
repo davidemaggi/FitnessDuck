@@ -1,7 +1,12 @@
 @using FitnessDuck.Client.Localization
+@using FitnessDuck.Models
 @using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
 @using Microsoft.Extensions.Localization
 @inject IStringLocalizer<Localizations> _localizer
+@inject ScheduleApiClient _schedules
+@inject ISnackbar _snackbar;
+@inject IDialogService DialogService
 
 
 
@@ -10,7 +15,7 @@
         <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
             <MudText Typo="Typo.h5" Class="fw-bold">@_Schedule.Name</MudText>
             <MudStack  Spacing="2" Row>
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Info" />
+                <MudIconButton OnClick="UpdateSchedule" Icon="@Icons.Material.Filled.Edit" Color="Color.Info" />
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
             </MudStack>
         </MudStack>
@@ -52,5 +57,48 @@
 @code {
     
     [Parameter] public ScheduleDto _Schedule { get; set; }
+    
+    
+    
+    private async Task UpdateSchedule()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters<ScheduleEditor>
+        {
+            { x => x._schedule, _Schedule },
+            
+            { x => x._mode, FormMode.Edit },
+            
+
+            
+        };
+        var dialog = await DialogService.ShowAsync<ScheduleEditor>("Modifica", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            //In a real world scenario we would reload the data from the source here since we "removed" it in the dialog already.
+            var res = result.Data! as SaveScheduleDto;
+
+            try
+            {
+                var saveResult = await _schedules.SaveSchedule(res);
+                _snackbar.Add("Schedule has ben modified", Severity.Success);
+            }
+            catch (Exception e)
+            {
+                _snackbar.Add("Error updating Schedule", Severity.Error);
+
+            }
+            
+            
+
+        }
+
+    }
+    
+    
+    
+    
     
 }

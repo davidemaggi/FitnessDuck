@@ -1,5 +1,6 @@
 @page "/admin"
 @using FitnessDuck.Client.Layout.Schedules
+@using FitnessDuck.Client.Layout.Users
 @using FitnessDuck.Models
 @using FitnessDuck.Models.Common
 @using FitnessDuck.Models.DTOs
@@ -16,6 +17,9 @@
         <Authorized>
             <MudTabPanel Text="Schedules" Icon="@Icons.Material.Filled.CalendarMonth">
                 <SchedulesLayout/>
+            </MudTabPanel>
+            <MudTabPanel Text="Utenti" Icon="@Icons.Material.Filled.Person">
+                <UsersListLayout/>
             </MudTabPanel>
         </Authorized>
     </AuthorizeView>

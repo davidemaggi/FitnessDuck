@@ -50,7 +50,17 @@ public class Repository<T> : IRepository<T> where T : class
         if (autoSave) 
             await SaveChangesAsync();
     }
- 
+
+    public async Task Remove(Guid id, bool autoSave = true)
+    {
+        var toRemove = _dbSet.Find(id);
+        if (toRemove == null)
+            return;
+         _dbSet.Remove(toRemove);
+         if (autoSave) 
+             await SaveChangesAsync();
+    }
+
 
     public async Task<T?> AddOrUpdateAsync(T entity, bool autoSave = true)
     {

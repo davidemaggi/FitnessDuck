@@ -56,6 +56,14 @@ builder.Services.AddHttpClient<TrainerApiClient>(client =>
     })
     .AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
 
+builder.Services.AddHttpClient<UserApiClient>(client =>
+    {
+        client.BaseAddress = new Uri("http://localhost:5235/");
+    })
+    .AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
+
+
+
 builder.Services.AddMudServices();
 
 builder.Services.AddAuthorizationCore();

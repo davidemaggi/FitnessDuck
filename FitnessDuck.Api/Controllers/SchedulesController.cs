@@ -33,7 +33,7 @@ public class SchedulesController : Controller
     }
     
     [Authorize(Roles = "Admin")]
-    [HttpPost("save")]
+    [HttpPost]
     [ProducesResponseType(500)]
     [ProducesResponseType(200, Type = typeof(ScheduleDto))]
     public async Task<IActionResult> SaveSchedule([FromBody] SaveScheduleDto payload)
@@ -42,7 +42,7 @@ public class SchedulesController : Controller
         
         ScheduleDto res = await _scheduleService.SaveScheduleAsync(payload);
 
-        var ccc = await _lessonService.GenerateLessonsFromSchedule(res.Id);
+        var ccc = await _lessonService.GenerateLessonsFromSchedule(res.Id, payload.DeleteLessons);
         
         
         

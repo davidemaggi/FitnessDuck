@@ -8,10 +8,13 @@ public interface IUserService
 {
     Task<UserDto> CreateFirstUserAsync(string email, string? name, string? surname);
     Task<UserDto> CreateUserAsync(string email, string? name, string? surname, UserRole role);
+    Task<UserDto> SaveUserAsync(UserDto dto);
     Task<UserDto> UpdateUserInfoAsync(UserInfoDto info);
     Task<UserDto?> GetByEmailAsync(string email);
     Task<UserDto?> GetByTelegramIdAsync(string telegramId);
     Task<UserDto> ConfirmContactMethod(ContactMethod contactMethod, UserDto user, string chatId="");
     Task<UserDto> GetByRefreshToken(string requestRefreshToken);
     Task<IEnumerable<UserInfoDto>> GetTrainers();
+    Task<IEnumerable<UserDto>> GetAll();
+    Task<UserDto?> GetByIdAsync(Guid bookingUserId);
 }

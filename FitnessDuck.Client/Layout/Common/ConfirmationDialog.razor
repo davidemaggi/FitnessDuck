@@ -1,0 +1,28 @@
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6">@Message</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Default" Variant="Variant.Text" OnClick="Cancel">Annulla</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Option1">@OptionTrue</MudButton>
+        @if (OptionFalse is not null)
+        {
+            <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="Option2">@OptionFalse</MudButton>
+
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public string Message { get; set; } = "Are you sure?";
+[Parameter] public string OptionTrue { get; set; } = "";
+[Parameter] public string? OptionFalse { get; set; }
+
+    void Cancel() => MudDialog.Cancel();
+
+    void Option1() => MudDialog.Close(DialogResult.Ok(true));
+
+    void Option2() => MudDialog.Close(DialogResult.Ok(false));
+}

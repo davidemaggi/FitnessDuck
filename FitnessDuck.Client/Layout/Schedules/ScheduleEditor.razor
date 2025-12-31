@@ -1,3 +1,4 @@
+@using FitnessDuck.Client.Layout.Common
 @using FitnessDuck.Client.Localization
 @using FitnessDuck.Models
 @using FitnessDuck.Models.Common
@@ -8,7 +9,7 @@
 @inject AuthApiClient _auth
 @inject TrainerApiClient _trainerClient
 @inject IStringLocalizer<Localizations> _localizer
-
+@inject IDialogService DialogService
 
 <MudDialog>
 
@@ -38,7 +39,7 @@
 
             <MudGrid>
                 <MudItem xs="12" sm="6">
-                    <MudTextField Label="Durata (minuti)" @bind-Value="_schedule.DurationMinutes" Type="number" Required="true"/>
+                    <MudTextField Label="Durata" AdornmentText="Minuti" @bind-Value="_schedule.DurationMinutes" Type="number" Required="true"/>
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudTextField Label="Posti disponibili" @bind-Value="_schedule.Seats" Type="number"/>
@@ -88,7 +89,7 @@
                                Variant="Variant.Filled"
                                Label="Genera le lezioni"
 
-                               ReadOnly="true"
+                               ReadOnly="false"
                                Placeholder="Istruttore"
                                HelperText="Queste Lezioni verranno generate con un anticipo di  quanti giorni"
 
@@ -103,7 +104,7 @@
 
                     </MudSelect>                </MudItem>
                 <MudItem xs="12" sm="6">
-                    <MudTextField Label="Anticipo Annullamento" @bind-Value="_schedule.MinUnsubscribeHours" Type="number"/>
+                    <MudTextField Label="Anticipo Annullamento" AdornmentText="Ore" @bind-Value="_schedule.MinUnsubscribeHours" Type="number"/>
                 </MudItem>
             </MudGrid>
                 
@@ -119,7 +120,7 @@
 
     <DialogActions>
         <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Annulla</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save">Salva modifiche</MudButton>
+        <MudButton Disabled="(form is not null && !form.IsTouched)" Variant="Variant.Filled" Color="Color.Primary" OnClick="Save">Salva modifiche</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -136,8 +137,13 @@
     
     [Parameter] public ScheduleDto _schedule { get; set; }
 
+    [Parameter] public FormMode _mode { get; set; } = FormMode.Create;
+    
+    private  List<DayPlan>? OriginalWeekPlan { get; set; }
 
+    private bool _modifiedSlot=true;
 
+    
     protected override async Task OnInitializedAsync()
     {
         _me = await _auth.MeAsync();
@@ -159,6 +165,10 @@
             };
             
         }
+        else
+        {
+            OriginalWeekPlan=new List<DayPlan>(_schedule.WeekPlan);
+        }
 
         loading = false;
 
@@ -173,6 +183,7 @@
 
     void RemoveSlot(DayPlan day, HourPlan slot)
     {
+        
         day.Slots.Remove(slot);
     }
 
@@ -183,10 +194,28 @@
         MudDialog.Close(DialogResult.Cancel());
     }
 
-    void Save()
+    async Task Save()
     {
         if (form.IsValid)
         {
+            var tmpDel = false;
+            if (OriginalWeekPlan is not null && DayPlan.AreWeekPlansEqual(OriginalWeekPlan, _schedule.WeekPlan))
+            {
+                var confirm = await ShowConfirmation();
+                switch (confirm)
+                {
+                    case ConfirmResult.Cancel:
+                        return;
+                    case ConfirmResult.Delete:
+                        tmpDel=true;
+                        break;  
+                    default:
+                        tmpDel=false;
+                        break; 
+                }
+                
+            }
+
             // Save logic here
             var toSave = new SaveScheduleDto
             {
@@ -203,6 +232,7 @@
                 AdvanceBookingDays = _schedule.AdvanceBookingDays,
                 StartDateUtc = _schedule.StartDateUtc,
                 EndDateUtc = _schedule.EndDateUtc,
+                DeleteLessons = tmpDel
 
             };
 
@@ -213,13 +243,44 @@
         }
     }
 
-    private string GetDayName(int day) => Enum.GetName(typeof(DayOfWeek), day);
-
-    public class WeeklySlot
+    async Task<ConfirmResult> ShowConfirmation()
     {
-        public int DayOfWeek { get; set; } = 1; // Defaults to Lunedì
-        public int Hour { get; set; } = 18;
-        public int Minute { get; set; } = 0;
+        
+        var parameters = new DialogParameters<ConfirmationDialog>
+        {
+            { x => x.Message, "Hai aggioranto gli slot, nel caso alcuni slot non fossero piu validi, vuoi mantenere le lezioni o cancellarle?" },
+            { x => x.OptionTrue, "Cancella" },
+        { x => x.OptionFalse, "Mantieni" },
+            
+
+            
+        };
+        
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = await DialogService.ShowAsync<ConfirmationDialog>("Confirm", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            bool delete = (bool)(result.Data??false);
+
+            return delete ? ConfirmResult.Delete : ConfirmResult.DoNotDelete;
+
+        }
+        else
+        {
+            return ConfirmResult.Cancel;
+        }
     }
+
+    private enum ConfirmResult
+    {
+        Cancel,
+        Delete,
+        DoNotDelete
+    }
+
 }
 

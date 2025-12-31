@@ -8,4 +8,5 @@ public interface INotificationOutboxService
     Task<IEnumerable<NotificationsOutboxDto>> GetPendingMessages();
     Task<bool> MessageSent(Guid msgId);
     Task MessageFailed(Guid msgId);
+    Task LessonDeleted(LessonDto lesson);
 }

@@ -12,9 +12,17 @@ public class UserDto
     public bool EmailConfirmed { get; set; }
     public bool TelegramConfirmed { get; set; }
     public Guid? TelegramConfirmationKey { get; set; }
-    public ICollection<RefreshTokenDto> RefreshTokens { get; set; }
+
+    public ICollection<RefreshTokenDto> RefreshTokens { get; set; } = [];
     //public ICollection<BookingDto> Bookings { get; set; } = new List<BookingDto>();
     public string? PushSubscription { get; set; }
+    
+    public UserPlan Plan { get; set; } = UserPlan.NoPlan;
+    public int PlanAmount { get; set; } = 1;
+    public DateTime? PlanExpiration { get; set; }
+
+    public DateTime RegistrationDate { get; set; } = DateTime.UtcNow;
+
     public bool HasFullName()=>Name is not null && Surname is not null;
 
 }

@@ -18,7 +18,7 @@ public class TrainerApiClient
 
     public async Task<IEnumerable<UserInfoDto>> GetAllTrainers()
     {
-        var response = await _httpClient.GetAsync("api/Trainers/all");
+        var response = await _httpClient.GetAsync("api/Trainers");
         if(!response.IsSuccessStatusCode) return new List<UserInfoDto>();
 
         var result = await response.Content.ReadFromJsonAsync<IEnumerable<UserInfoDto>>();

@@ -32,6 +32,47 @@ public class UserRepository : Repository<UserEntity>, IUserRepository
         return user;
     }
 
+    public async Task<UserEntity> CreateUserAsync(UserDto dto)
+    {
+        var user = new UserEntity();
+        
+        var existingUser = await _dbSet.FindAsync(dto.Id);
+        if (existingUser is not null)
+        {
+            user = existingUser;
+            
+            user.Name = dto.Name;
+            user.Surname = dto.Surname;
+            user.PlanExpiration = dto.PlanExpiration;
+            user.PlanAmount = dto.PlanAmount;
+            user.PlanAmount = dto.PlanAmount;
+        }
+        else
+        {
+            user = new UserEntity
+            {
+                Id = dto.Id,
+                Email = dto.Email,
+                Name = dto.Name,
+                Surname = dto.Surname,
+                Role = dto.Role,
+                EmailConfirmed = dto.EmailConfirmed,
+           
+            
+           
+                Plan = dto.Plan,
+                PlanAmount = dto.PlanAmount,
+                RegistrationDate = DateTime.UtcNow,
+                PlanExpiration = dto.PlanExpiration
+            };
+        }
+
+        
+        
+        await AddOrUpdateAsync(user,true);
+        return user;
+    }
+
     public async Task<UserEntity> UpdateUserInfoAsync(UserInfoDto info)
     {
   

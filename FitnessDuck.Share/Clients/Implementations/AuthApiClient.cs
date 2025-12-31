@@ -23,7 +23,22 @@ public class AuthApiClient
         var response = await _httpClient.PostAsJsonAsync("api/Auth/request-token", dto);
         return response.IsSuccessStatusCode;
     }
+    
+    public async Task<bool> ValidateTokenAsync(ValidateTokenDto dto)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/Auth/validate-token", dto);
+        return response.IsSuccessStatusCode;
+    }
 
+    public async Task<bool> ValidateTokenOnlyAsync(ValidateTokenDto dto)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/Auth/validate-token-only", dto);
+        return response.IsSuccessStatusCode;
+    }
+    
+    
+    
+    
     public async Task<UserDto?> MeAsync()
     {
         var response = await _httpClient.GetAsync("api/Auth/me");

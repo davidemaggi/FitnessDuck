@@ -21,7 +21,7 @@ public class TrainersController : Controller
     }
     
     [Authorize]
-    [HttpGet("all")]
+    [HttpGet]
     [ProducesResponseType(200, Type = typeof(IEnumerable<UserInfoDto>))]
     public async Task<IActionResult> GetTrainerList()
     {

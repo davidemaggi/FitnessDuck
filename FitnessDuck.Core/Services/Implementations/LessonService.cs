@@ -3,6 +3,7 @@ using FitnessDuck.Data.Entities;
 using FitnessDuck.Data.Repositories.Interfaces;
 using FitnessDuck.Models;
 using FitnessDuck.Models.DTOs;
+using FitnessDuck.Notifications.Interfaces;
 using MapsterMapper;
 
 namespace FitnessDuck.Core.Services.Implementations;
@@ -11,13 +12,17 @@ public class LessonService:ILessonService
 {
     private readonly ILessonRepository _lessonRepo;
     private readonly IScheduleService _scheduleService;
+    private readonly IUserRepository _userRepo;
     private readonly IMapper _mapper;
+    private readonly INotificationOutboxService _notification;
 
-    public LessonService(ILessonRepository lessonRepo, IMapper mapper, IScheduleService scheduleService)
+    public LessonService(ILessonRepository lessonRepo, IMapper mapper, IScheduleService scheduleService, IUserRepository userRepo, INotificationOutboxService notification)
     {
         _lessonRepo = lessonRepo;
         _mapper = mapper;
         _scheduleService = scheduleService;
+        _userRepo = userRepo;
+        _notification = notification;
     }
 
     public async Task<IEnumerable<LessonDto>> GetUpcomingLessonsAsync(DateTime fromDate, DateTime toDate)
@@ -60,72 +65,95 @@ public class LessonService:ILessonService
     }
     
     
-    public async Task<IEnumerable<LessonDto>> GenerateLessonsFromSchedule(Guid scheduleId)
+    public async Task<IEnumerable<LessonDto>> GenerateLessonsFromSchedule(Guid scheduleId, bool deleteLessons=false)
     {
-        var schedule = await _scheduleService.GetScheduleByIdAsync(scheduleId);
-        
-        
-        var now = DateTime.Now;
-        var endDate = now.AddDays(schedule.AdvanceBookingDays);
-        var generatedLessons = new List<LessonDto>();
+       var schedule = await _scheduleService.GetScheduleByIdAsync(scheduleId);
 
-        for (DateTime day = now.Date; day <= endDate.Date; day = day.AddDays(1))
+    var now = DateTime.Now;
+    var endDate = now.AddDays(schedule.AdvanceBookingDays);
+    var generatedLessons = new List<LessonDto>();
+
+    // Collect all valid lesson start times from current schedule slots
+    var validLessonStartTimes = new List<DateTime>();
+
+    for (DateTime day = now.Date; day <= endDate.Date; day = day.AddDays(1))
+    {
+        var dayPlan = schedule.WeekPlan.FirstOrDefault(dp => dp.DayOfWeek == day.DayOfWeek);
+        if (dayPlan == null || !dayPlan.IsActive)
+            continue;
+
+        foreach (var slot in dayPlan.Slots)
         {
-            // Find the DayPlan for the current day
-            var dayPlan = schedule.WeekPlan.FirstOrDefault(dp => dp.DayOfWeek == day.DayOfWeek);
+            var lessonStart = new DateTime(day.Year, day.Month, day.Day, slot.Hour, slot.Minute, 0);
+            if (lessonStart < now)
+                continue;
 
-            if (dayPlan == null || !dayPlan.IsActive)
-                continue; // Skip inactive or missing day plans
+            validLessonStartTimes.Add(lessonStart);
 
-            foreach (var slot in dayPlan.Slots)
+            bool exists = await LessonExistsForSchedule(lessonStart, schedule.Id);
+            if (!exists)
             {
-                // Compose lesson start datetime
-                var lessonStart = new DateTime(day.Year, day.Month, day.Day, slot.Hour, slot.Minute, 0);
-
-                // Only generate lessons in the future (or now)
-                if (lessonStart < now)
-                    continue;
-
-                // Check if a lesson at that exact time already exists
-                bool exists = await LessonExistsForSchedule(lessonStart, schedule.Id);
-
-                if (!exists)
+                generatedLessons.Add(new LessonDto
                 {
-                    // Create new lesson and add to list
-                    generatedLessons.Add(new LessonDto
-                    {
-                        Id = Guid.NewGuid(),
-                        ScheduleId = schedule.Id,
-                        StartDateUtc = lessonStart,
-                        EndDateUtc = lessonStart.AddMinutes(schedule.DurationMinutes),
-                        Seats = schedule.Seats,
-                        Name = schedule.Name,
-                        Description = schedule.Description,
-                        TrainerId = schedule.TrainerId,
-                        AdvanceBookingDays = schedule.AdvanceBookingDays,
-                        MinUnsubscribeHours = schedule.MinUnsubscribeHours,
-
-                    });
-                }
+                    Id = Guid.NewGuid(),
+                    ScheduleId = schedule.Id,
+                    StartDateUtc = lessonStart,
+                    EndDateUtc = lessonStart.AddMinutes(schedule.DurationMinutes),
+                    Seats = schedule.Seats,
+                    Name = schedule.Name,
+                    Description = schedule.Description,
+                    TrainerId = schedule.TrainerId,
+                    AdvanceBookingDays = schedule.AdvanceBookingDays,
+                    MinUnsubscribeHours = schedule.MinUnsubscribeHours,
+                });
             }
         }
-
-
-        foreach (var lesson in generatedLessons)
-        {
-            await SaveLessonAsync(lesson);
-        }
-
-
-
-
-
-
-
-
-        return  generatedLessons;
     }
 
+    // Fetch all existing lessons within the date range of schedule
+    var tmpExistingLessons = await _lessonRepo.GetLessonsForScheduleBetweenDates(schedule.Id, now, endDate);
+    var existingLessons=_mapper.Map<IEnumerable<LessonDto>>(tmpExistingLessons);
+    // Find lessons to delete: those that are in existingLessons but NOT in validLessonStartTimes
+    var lessonsToDelete = existingLessons
+        .Where(lesson => !validLessonStartTimes.Contains(lesson.StartDateUtc))
+        .ToList();
+
+    // Delete lessons for removed slots
+    if (deleteLessons)
+    {
+   
+
+    foreach (var lesson in lessonsToDelete)
+    {
+        await _lessonRepo.Remove(lesson.Id);
+        await _notification.LessonDeleted(lesson);
+
+    }
+    
+    }
+    else
+    {
+        foreach (var lesson in lessonsToDelete)
+        {
+            
+            await _lessonRepo.RemoveLessonsFromScheduleAsync(lesson.Id);
+            
+        }
+    }
+
+    // Save new lessons
+    foreach (var lesson in generatedLessons)
+    {
+        await SaveLessonAsync(lesson);
+    }
+
+    return generatedLessons;
+    }
+
+    
+    
+    
+    
     public async Task<LessonDto> SubscribeToLesson(Guid lessonId, Guid userId)
     {
          var alreadyRegisterd = await _lessonRepo.isUserRegisteredtoLesson(lessonId, userId);
@@ -133,6 +161,16 @@ public class LessonService:ILessonService
          if (alreadyRegisterd)
              throw new Exception("You cannot subscribe to this lesson");
          var lesson = await _lessonRepo.GetByIdAsync(lessonId);
+
+
+         if (!await CanSubscribeToLesson(userId,lessonId))
+         {
+             throw new Exception("You cannot subscribe to this lesson because it exceeds your plan");
+             
+         }
+
+
+
 
          var overbooking = false;
 
@@ -170,4 +208,68 @@ public class LessonService:ILessonService
         
         
         return _mapper.Map<IEnumerable<LessonDto>>(lessons);    }
+    
+    
+    public async Task<bool> CanSubscribeToLesson(Guid userId, Guid lessonId)
+    {
+        
+        var user = await _userRepo.GetByIdAsync(userId);
+
+        var lesson = await _lessonRepo.GetByIdAsync(lessonId);
+
+        if (user.Role==UserRole.Trainee)
+        {
+
+            if (user.Plan == UserPlan.Weekly)
+            {
+            
+
+            int diffToMonday = (7 + (lesson.StartDateUtc.DayOfWeek - DayOfWeek.Monday)) % 7;
+            DateTime weekStartUtc = lesson.StartDateUtc.Date.AddDays(-diffToMonday);
+            DateTime weekEndUtc = weekStartUtc.AddDays(6).Date.AddDays(1).AddTicks(-1);
+            
+            
+            var bookingsThisWeek = user.Bookings
+                .Where(b => b.BookingDateUtc >= weekStartUtc && b.BookingDateUtc <= weekEndUtc && b.Status==BookingStatus.Confirmed)
+                .ToList();
+
+            return bookingsThisWeek.Count >= user.PlanAmount;
+
+
+            }
+
+            if (user.Plan == UserPlan.Weekly)
+            {
+                DateTime monthStartUtc = new DateTime(lesson.StartDateUtc.Year, lesson.StartDateUtc.Month, 1);
+                DateTime monthEndUtc = monthStartUtc.AddMonths(1).AddTicks(-1);
+
+                var bookingsThisMonth = user.Bookings
+                    .Where(b => b.BookingDateUtc >= monthStartUtc && b.BookingDateUtc <= monthEndUtc && b.Status==BookingStatus.Confirmed)
+                    .ToList();
+
+            return bookingsThisMonth.Count >= user.PlanAmount;
+
+            }
+            
+            if (user.Plan == UserPlan.NoPlan)
+            {
+
+
+                var nextBookings = user.Bookings
+                    .Where(b => b.BookingDateUtc >= DateTime.UtcNow  && b.Status==BookingStatus.Confirmed)
+                    .ToList();
+
+                return nextBookings.Count >= user.PlanAmount;
+
+            }
+
+        }
+
+
+
+        return true;
+    }
+    
+    
+    
 }

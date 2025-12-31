@@ -89,4 +89,28 @@ public class LessonRepository : Repository<LessonEntity>, ILessonRepository
         .Include(x=>x.Trainer)
         .Where(x =>
         x.Bookings.Any(b => b.UserId == userId && b.Status != BookingStatus.Deleted)).ToListAsync();
+    
+    
+    public async Task<IEnumerable<LessonEntity>> GetLessonsForScheduleBetweenDates(Guid scheduleId, DateTime startDateUtc, DateTime endDateUtc)=>await _dbSet
+        .Include(x=>x.Trainer)
+        .Include(x=>x.Bookings)
+        .Where(l => l.ScheduleId == scheduleId 
+                    && l.StartDateUtc >= startDateUtc 
+                    && l.StartDateUtc <= endDateUtc)
+            
+        .ToListAsync();
+
+    
+
+    public async Task RemoveLessonsFromScheduleAsync(Guid lessonId)
+    {
+        var lesson = await _dbSet.FindAsync(lessonId);
+        if (lesson == null)
+            return; // Or throw if you prefer
+
+        lesson.ScheduleId = null;
+        
+        await Update(lesson);
+      
+    }
 }

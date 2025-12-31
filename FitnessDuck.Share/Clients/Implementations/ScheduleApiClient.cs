@@ -82,7 +82,7 @@ public class ScheduleApiClient
         
     
 
-        var response = await _httpClient.PostAsJsonAsync("api/Schedules/save",dto);
+        var response = await _httpClient.PostAsJsonAsync("api/Schedules",dto);
         if(!response.IsSuccessStatusCode) return null;
 
         var result = await response.Content.ReadFromJsonAsync<ScheduleDto>();

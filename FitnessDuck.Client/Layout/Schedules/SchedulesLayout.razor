@@ -59,7 +59,18 @@
     {
         var options = new DialogOptions { CloseOnEscapeKey = true };
 
-        var dialog = await DialogService.ShowAsync<ScheduleEditor>("Editor", options);
+        var parameters = new DialogParameters<ScheduleEditor>
+        {
+            
+            { x => x._mode, FormMode.Create },
+            
+
+            
+        };
+        
+        var dialog = await DialogService.ShowAsync<ScheduleEditor>("Crea",parameters, options);
+        
+        
         var result = await dialog.Result;
 
         if (!result.Canceled)
@@ -83,5 +94,7 @@
         }
 
     }
+    
+    
 
 }

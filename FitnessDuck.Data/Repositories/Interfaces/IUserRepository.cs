@@ -8,6 +8,7 @@ public interface IUserRepository: IRepository<UserEntity>
 {
     public Task<UserEntity> CreateFirstUserAsync(string email, string? name, string? surname);
     public Task<UserEntity> CreateUserAsync(string email, string? name, string? surname, UserRole role);
+    public Task<UserEntity> CreateUserAsync(UserDto dto);
     public Task<UserEntity> UpdateUserInfoAsync(UserInfoDto info);
     
     public Task<UserEntity?> GetByTelegramIdAsync(string email);

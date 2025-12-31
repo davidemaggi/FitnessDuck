@@ -7,8 +7,11 @@ public class UserInfoDto
     public string? Surname { get; set; }
     public string Local { get; set; } = "it-IT";
     
-    
-    
+    public UserPlan Plan { get; set; } = UserPlan.NoPlan;
+    public int PlanAmount { get; set; } = 1;
+    public DateTime RegistrationDate { get; set; } = DateTime.UtcNow;
+    public DateTime? PlanExpiration { get; set; }
+
     
     public string GetFullName()=> $"{Name} {Surname}";
     

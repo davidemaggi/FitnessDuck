@@ -11,4 +11,9 @@ public interface ILessonRepository : IRepository<LessonEntity>
     Task<LessonEntity> SubscribeToLesson(Guid lessonId, Guid userId, bool overbooking);
     Task<LessonEntity> UnsubscribeFromLesson(Guid lessonId, Guid userId);
     Task<IEnumerable<LessonEntity>> GetMyLessonsAsync(Guid userId);
+
+    Task<IEnumerable<LessonEntity>> GetLessonsForScheduleBetweenDates(Guid scheduleId, DateTime startDateUtc,
+        DateTime endDateUtc);
+
+    Task RemoveLessonsFromScheduleAsync(Guid lessonId);
 }

@@ -36,7 +36,7 @@ public class EmailSender: IEmailSender
 
     }
 
-    public void SendEmailAsync(string email, string subject, string message)
+    public async Task SendEmailAsync(string email, string subject, string message)
     {
         MailAddress to = new MailAddress(email);
         MailMessage msgMail = new System.Net.Mail.MailMessage(_sender, to);
@@ -51,7 +51,7 @@ public class EmailSender: IEmailSender
         // text or html
         msgMail.IsBodyHtml = true;
 
-        _smtpClient.Send(msgMail);
+        _smtpClient.SendAsync(msgMail, null);
     }
 
    

@@ -2,6 +2,7 @@ using FitnessDuck.Data.Repositories.Interfaces;
 using FitnessDuck.Mail.Interfaces;
 using FitnessDuck.Models;
 using FitnessDuck.Notifications.Interfaces;
+using FitnessDuck.TelegramBot.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,16 +13,18 @@ public class OutboxRunner: IHostedService, IDisposable
 {
     private readonly ILogger<OutboxRunner> _logger;
     private readonly IEmailSender _emailSender;
+    private readonly ITelegramBotService _telegramBotService;
     private Timer? _timer;
     private bool _isRunning;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly TimeSpan _interval = TimeSpan.FromSeconds(10);
 
-    public OutboxRunner(ILogger<OutboxRunner> logger, IEmailSender emailSender, IServiceScopeFactory scopeFactory)
+    public OutboxRunner(ILogger<OutboxRunner> logger, IEmailSender emailSender, IServiceScopeFactory scopeFactory, ITelegramBotService telegramBotService)
     {
         _logger = logger;
         _emailSender = emailSender;
         _scopeFactory = scopeFactory;
+        _telegramBotService = telegramBotService;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -80,7 +83,15 @@ public class OutboxRunner: IHostedService, IDisposable
             if (dto.Method==ContactMethod.Email)
             {
                 
-                _emailSender.SendEmailAsync(dto.User is not null? dto.User.Email : dto.Contact, dto.Subject??"" ,dto.Message);
+                await _emailSender.SendEmailAsync(dto.User is not null? dto.User.Email : dto.Contact, dto.Subject??"" ,dto.Message);
+                await _outboxService.MessageSent(dto.Id);
+
+            }
+            
+            if (dto.Method==ContactMethod.Telegram)
+            {
+                
+                await _telegramBotService.SendMessageAsync(dto.Contact,dto.Message);
                 await _outboxService.MessageSent(dto.Id);
 
             }

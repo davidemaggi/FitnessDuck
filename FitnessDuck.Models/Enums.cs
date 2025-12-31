@@ -33,6 +33,16 @@ public enum RecurrenceType
     
 }
 
+public enum UserPlan
+{
+    NoPlan = 0,
+    Weekly = 1,
+    Monthly = 2,
+    Carnet = 3,
+
+
+    
+}
 
 public enum UserRole
 {
@@ -40,6 +50,17 @@ public enum UserRole
     Trainee = 1,
     Trainer = 2,
     Admin = 3,
+
+
+    
+}
+
+
+public enum FormMode
+{
+    View = 0,
+    Edit = 1,
+    Create = 2
 
 
     

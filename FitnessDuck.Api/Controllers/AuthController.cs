@@ -65,11 +65,7 @@ public class AuthController : Controller
         var token = await _tokenService.GenerateTokenAsync(dto.Contact);
 
         var user = await _userService.GetByEmailAsync(dto.Contact);
-
-        if (user is not null && dto.ContactMethod==ContactMethod.Telegram && user is { TelegramConfirmed: false, TelegramConfirmationKey: not null })
-        {
-            token = user.TelegramConfirmationKey.ToString()!;
-        }
+        
 
         switch (dto.ContactMethod)
         {
@@ -83,17 +79,30 @@ public class AuthController : Controller
                     Contact = dto.Contact,
                     Attempt = 0
                 });
-                
-                
-                
+
+                if (user is not null && user.TelegramConfirmed)
+                {
+                    
+                    await _outboxService.AddMessage(new NotificationsOutboxDto
+                    {
+                        Id = Guid.NewGuid(),
+                        Method = ContactMethod.Telegram,
+                        Message = string.Format("Your token is {0}",token),
+                        Contact = user.TelegramChatId,
+                        Attempt = 0
+                    });
+                    
+                }
+
+
                 break;
             case ContactMethod.Telegram:
                 
                await _outboxService.AddMessage(new NotificationsOutboxDto
                 {
                     Id = Guid.NewGuid(),
-                    Method = ContactMethod.Email,
-                    Message = string.Format("Your Telegram invite is <a href=\"https://t.me/fitnessduckdev_bot?start={0}\">Here!</a> ",token),
+                    Method = ContactMethod.Telegram,
+                    Message = string.Format("Your token is {0}",token),
                     Contact = dto.Contact,
                     Attempt = 0
                 });
@@ -143,6 +152,17 @@ public class AuthController : Controller
         });
     }
 
+    [HttpPost("validate-token-only")]
+    public async Task<IActionResult> ValidateTokenOnly([FromBody] ValidateTokenDto dto)
+    {
+        var valid = await _tokenService.ValidateTokenAsync(dto.Contact, dto.Token);
+        if (!valid) return Unauthorized("Invalid token.");
+
+        
+
+        
+        return Ok();
+    }
     
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromBody] TokenRefreshRequestDto request)

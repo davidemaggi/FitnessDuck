@@ -1,0 +1,174 @@
+@using FitnessDuck.Models
+@using FitnessDuck.Models.DTOs
+@using FitnessDuck.Share.Clients.Implementations
+@inject UserApiClient _userApiClient
+@inject IDialogService DialogService
+@inject ISnackbar _snackbar;
+
+<MudCard Elevation="1" Class="mb-2" >
+    <MudTable ServerData="ServerReload" Hover="true" @ref="table">
+        <ToolBarContent>
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" OnClick="CreateNewUser" Color="Color.Info">Crea Utente</MudButton>
+            <MudSpacer />
+            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Cerca" Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortLabel="name_field" T="UserDto">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="surname_field" T="UserDto">Surname</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="email_field" T="UserDto">Email</MudTableSortLabel></MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Surname">@context.Surname</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd>
+                <MudStack row>
+                    <MudIconButton OnClick="async () => await EditUser(context)" Icon="@Icons.Material.Filled.Edit" Color="Color.Info" Variant="Variant.Text"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Variant="Variant.Text"/>
+                </MudStack>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText>No matching records found</MudText>
+        </NoRecordsContent>
+        <LoadingContent>
+            <MudText>Loading...</MudText>
+        </LoadingContent>
+        <PagerContent>
+            <MudTablePager/>
+        </PagerContent>
+    </MudTable>
+</MudCard>
+
+@code {
+
+    private bool _loading = true;
+    private IEnumerable<UserDto> _users = new List<UserDto>();
+
+    private MudTable<UserDto> table;
+
+    private int totalItems;
+    private string searchString = null;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _users = await _userApiClient.GetAll();
+        _loading = false;
+    }
+
+    
+    private async Task<TableData<UserDto>> ServerReload(TableState state, CancellationToken token)
+    {
+        IEnumerable<UserDto> data = await _userApiClient.GetAll();
+       
+        data = data.Where(element =>
+        {
+            if (string.IsNullOrWhiteSpace(searchString))
+                return true;
+            if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (element.Surname.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (element.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            return false;
+        }).ToArray();
+        totalItems = data.Count();
+        switch (state.SortLabel)
+        {
+            case "name_field":
+                data = data.OrderByDirection(state.SortDirection, o => o.Name);
+                break;
+            case "surname_field":
+                data = data.OrderByDirection(state.SortDirection, o => o.Surname);
+                break;
+            
+        }
+
+        _users = data.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new TableData<UserDto>() {TotalItems = totalItems, Items = _users};
+    }
+
+    private void OnSearch(string text)
+    {
+        searchString = text;
+        table.ReloadServerData();
+    }
+    
+    
+    private async Task CreateNewUser()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters<UserEditor>
+        {
+            { x => x._mode, FormMode.Create },
+            
+
+            
+        };
+        var dialog = await DialogService.ShowAsync<UserEditor>("Crea",parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            //In a real world scenario we would reload the data from the source here since we "removed" it in the dialog already.
+            var res = result.Data! as UserDto;
+
+            try
+            {
+               // var saveResult = await _schedules.SaveSchedule(res);
+                _snackbar.Add("User has ben created", Severity.Success);
+            }
+            catch (Exception e)
+            {
+                _snackbar.Add("Error creating User", Severity.Error);
+
+            }
+            
+            
+
+        }
+
+    }
+    
+    
+    private async Task EditUser(UserDto user)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters<UserEditor>
+        {
+            { x => x._user, user },
+        { x => x._mode, FormMode.Edit },
+            
+
+            
+        };
+        var dialog = await DialogService.ShowAsync<UserEditor>("Modifica",parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            //In a real world scenario we would reload the data from the source here since we "removed" it in the dialog already.
+            var res = result.Data! as SaveScheduleDto;
+
+            try
+            {
+                // var saveResult = await _schedules.SaveSchedule(res);
+                _snackbar.Add("Schedule has ben created", Severity.Success);
+            }
+            catch (Exception e)
+            {
+                _snackbar.Add("Error creating Schedule", Severity.Error);
+
+            }
+            
+            
+
+        }
+
+    }
+
+}
